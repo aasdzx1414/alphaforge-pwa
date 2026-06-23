@@ -1,0 +1,21 @@
+{
+  "name": "AlphaForge PRO",
+  "short_name": "AlphaForge",
+  "description": "Resonance Engine · Real-time Orderflow · Quant Terminal",
+  "start_url": "./AlphaForge_PRO.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0a0e14",
+  "theme_color": "#0a0e14",
+  "icons": [
+    {
+      "src": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIiB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiI+PHJlY3Qgd2lkdGg9IjUxMiIgaGVpZ2h0PSI1MTIiIHJ4PSIxMTAiIGZpbGw9IiMwYTBlMTQiLz48cGF0aCBkPSJNIDE2NiAzMzYgTCAyNTYgMTU2IEwgMzQ2IDMzNiBMIDMxMSAzMzYgTCAyOTQgMjk0IEwgMjE4IDI5NCBMIDIwMSAzMzYgWiIgZmlsbD0iI2YwYTUwMCIvPjxyZWN0IHg9IjIzNCIgeT0iMjY2IiB3aWR0aD0iNDQiIGhlaWdodD0iMTQiIGZpbGw9IiMwYTBlMTQiIHJ4PSIyIi8+PHRleHQgeD0iMjU2IiB5PSIzODEiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIyMCIgZm9udC13ZWlnaHQ9IjkwMCIgZmlsbD0iIzNiYjhmNSI+UFJPPC90ZXh0Pjwvc3ZnPg==",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ],
+  "categories": ["finance"],
+  "lang": "zh-Hant"
+}

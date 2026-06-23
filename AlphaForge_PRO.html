@@ -345,7 +345,11 @@ html{overflow-x:hidden;width:100%}
 .mobile-menu-btn:hover{border-color:var(--amber);color:var(--amber)}
 
 @media (max-width: 900px){
-  .layout{grid-template-columns:0 1fr}
+  /* 關鍵修復：sidebar 用 display:none 隱藏後會完全退出 grid 排版，
+     若 grid-template-columns 仍是兩欄(0 1fr)，唯一剩下的內容元素會被
+     自動排版演算法塞進「第一欄」(寬度0px)，導致整個內容區域寬度變成0，
+     畫面看起來像是擠進一條窄欄、右側留白。改為單欄 1fr 即可讓內容佔滿全寬。*/
+  .layout{grid-template-columns:1fr !important;display:block !important}
   .content{padding:12px}
   
   /* 漢堡按鈕在手機才出現 */
@@ -396,6 +400,16 @@ html{overflow-x:hidden;width:100%}
   .tp-sym{font-size:9px}
   .tp-price{font-size:10px}
   .topbar-right{display:none}  /* 手機隱藏時鐘節省空間 */
+
+  /* 即時新聞：1fr 320px 雙欄改單欄，側邊欄(熱門幣種/恐懼貪婪/快訊)疊到下方 */
+  .news-layout-grid{grid-template-columns:1fr !important;grid-template-rows:auto auto !important;overflow:visible !important}
+
+  /* 倉位計算機：左右兩欄改上下堆疊 */
+  .calc-main-grid{grid-template-columns:1fr !important}
+
+  /* 幣種版塊標題列：6欄太擠，手機隱藏均費率與上漲比，只留圖示/名稱/漲跌/箭頭 */
+  .sector-header-grid{grid-template-columns:auto 1fr auto auto !important;gap:8px !important}
+  .sector-stat-avgfr,.sector-stat-count{display:none !important}
 }
 @media (max-width:600px){
   .top-row{grid-template-columns:1fr}
@@ -426,6 +440,14 @@ html{overflow-x:hidden;width:100%}
   
   /* 幣種表進一步簡化 */
   .coin-row{grid-template-columns:28px 1fr 60px !important;font-size:10px}
+
+  /* 幣種版塊：超小屏幕進一步只留圖示/名稱/箭頭 */
+  .sector-header-grid{grid-template-columns:auto 1fr auto !important}
+  .sector-stat-avgchg{display:none !important}
+}
+@media (max-width:480px){
+  /* 幣種一覽摘要列在更窄螢幕改為可橫向滑動，而非硬擠5欄 */
+  #market-summary-bar{grid-template-columns:repeat(5,minmax(100px,1fr)) !important;overflow-x:auto !important}
 }
 
 /* ── 即時新聞 ── */
@@ -1288,7 +1310,7 @@ window.addEventListener('unhandledrejection', function(e){
     <div id="news-trending" class="trending-bar" style="display:none"></div>
 
     <!-- News feed -->
-    <div style="display:grid;grid-template-columns:1fr 320px;flex:1;min-height:0;overflow:hidden">
+    <div class="news-layout-grid" style="display:grid;grid-template-columns:1fr 320px;flex:1;min-height:0;overflow:hidden">
 
       <!-- Main feed -->
       <div style="overflow-y:auto;border-right:1px solid var(--border)" id="news-feed">
@@ -1318,7 +1340,7 @@ window.addEventListener('unhandledrejection', function(e){
     <div style="max-width:1000px;margin:0 auto;width:100%">
       <div style="text-align:center;font-family:var(--mono);font-size:20px;font-weight:700;color:var(--amber);margin-bottom:24px;letter-spacing:2px">倉位計算機</div>
 
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+      <div class="calc-main-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
         <!-- 左：基本設定 -->
         <div>
           <!-- 基本設定卡 -->
@@ -3539,18 +3561,18 @@ function renderSectors(){
 
     return `
       <div style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;margin-bottom:8px;overflow:hidden">
-        <div onclick="toggleSector('${sector.name}')" style="display:grid;grid-template-columns:auto 1fr auto auto auto auto;gap:14px;align-items:center;padding:14px 16px;cursor:pointer">
+        <div class="sector-header-grid" onclick="toggleSector('${sector.name}')" style="display:grid;grid-template-columns:auto 1fr auto auto auto auto;gap:14px;align-items:center;padding:14px 16px;cursor:pointer">
           <div style="width:32px;height:32px;border-radius:50%;background:${sector.color}22;display:flex;align-items:center;justify-content:center;font-size:16px">${sector.icon}</div>
           <div style="font-size:14px;font-weight:600;color:var(--text)">${sector.name}</div>
-          <div style="text-align:right">
+          <div class="sector-stat-avgchg" style="text-align:right">
             <div style="font-size:9px;color:var(--hint)">均漲跌</div>
             <div style="font-family:var(--mono);font-size:13px;font-weight:700;color:${chgColor}">${stats.avgChg>=0?'+':''}${stats.avgChg.toFixed(2)}%</div>
           </div>
-          <div style="text-align:right">
+          <div class="sector-stat-avgfr" style="text-align:right">
             <div style="font-size:9px;color:var(--hint)">均費率</div>
             <div style="font-family:var(--mono);font-size:12px;color:${frColor}">${stats.avgFr>=0?'+':''}${(stats.avgFr*100).toFixed(4)}%</div>
           </div>
-          <div style="text-align:right;font-family:var(--mono);font-size:12px;color:var(--muted)">${stats.upCount}/${stats.total}</div>
+          <div class="sector-stat-count" style="text-align:right;font-family:var(--mono);font-size:12px;color:var(--muted)">${stats.upCount}/${stats.total}</div>
           <div style="color:var(--muted);font-size:12px;transition:transform .2s;transform:rotate(${expanded?'90':'0'}deg)">▶</div>
         </div>
         ${coinRows}

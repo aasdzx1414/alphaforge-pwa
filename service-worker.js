@@ -9,8 +9,6 @@ const CACHE_NAME = `${VERSION}-cache`;
 const PRECACHE_URLS = [
   './AlphaForge_PRO.html',
   './manifest.json',
-  './icon-192.svg',
-  './icon-512.svg',
 ];
 
 self.addEventListener('install', event => {

@@ -7,6 +7,7 @@
 <!-- PWA -->
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#0a0e14">
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="AlphaForge">
@@ -25,7 +26,8 @@
   --r:6px;
 }
 *{box-sizing:border-box;margin:0;padding:0}
-body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:13px;min-height:100vh}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:13px;min-height:100vh;overflow-x:hidden}
+html{overflow-x:hidden;width:100%}
 
 /* ── Topbar ── */
 .topbar{display:flex;align-items:center;justify-content:space-between;padding:0 20px;height:48px;
@@ -79,26 +81,26 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:13
 .top-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:stretch}
 .signal-box{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:14px;
   min-height:320px;display:flex;flex-direction:column}
-.sig-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
-.sig-type{font-size:11px;letter-spacing:1px;font-family:var(--mono);display:flex;align-items:center;gap:6px}
-.dot-green{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green)}
-.dot-red{width:7px;height:7px;border-radius:50%;background:var(--red);box-shadow:0 0 6px var(--red)}
+.sig-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;overflow:hidden}
+.sig-type{font-size:11px;letter-spacing:1px;font-family:var(--mono);display:flex;align-items:center;gap:6px;white-space:nowrap}
+.dot-green{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green);flex-shrink:0}
+.dot-red{width:7px;height:7px;border-radius:50%;background:var(--red);box-shadow:0 0 6px var(--red);flex-shrink:0}
 .sig-cols{display:grid;grid-template-columns:1fr 90px 120px 70px;gap:4px;
   font-size:9px;letter-spacing:1px;color:var(--muted);text-transform:uppercase;
-  padding:4px 8px;border-bottom:1px solid var(--border);margin-bottom:6px}
+  padding:4px 8px;border-bottom:1px solid var(--border);margin-bottom:6px;overflow-x:auto}
 .sig-row{display:grid;grid-template-columns:1fr 90px 120px 70px;gap:4px;
-  padding:7px 8px;border-radius:4px;cursor:pointer;transition:background .15s;align-items:center}
+  padding:7px 8px;border-radius:4px;cursor:pointer;transition:background .15s;align-items:center;overflow-x:auto;min-width:min-content}
 .sig-row:hover{background:var(--bg3)}
 /* 訊號列表撐滿卡片，5列均勻分布 */
-#long-signals, #short-signals{flex:1;display:flex;flex-direction:column;justify-content:space-around}
+#long-signals, #short-signals{flex:1;display:flex;flex-direction:column;justify-content:space-around;overflow:hidden}
 #long-signals .sig-row, #short-signals .sig-row{padding:9px 8px}
-.sig-sym{font-family:var(--mono);font-size:12px;font-weight:500;display:flex;align-items:center;gap:6px}
-.strength-bar{display:flex;gap:2px}
+.sig-sym{font-family:var(--mono);font-size:12px;font-weight:500;display:flex;align-items:center;gap:6px;min-width:0;overflow:hidden;white-space:nowrap}
+.strength-bar{display:flex;gap:2px;flex-shrink:0}
 .s-pip{width:6px;height:10px;border-radius:1px;background:var(--hint)}
 .s-pip.on-green{background:var(--green)}
 .s-pip.on-red{background:var(--red)}
-.sig-price{font-family:var(--mono);font-size:11px}
-.sig-chg{font-family:var(--mono);font-size:11px;text-align:right}
+.sig-price{font-family:var(--mono);font-size:11px;flex-shrink:0;white-space:nowrap}
+.sig-chg{font-family:var(--mono);font-size:11px;text-align:right;flex-shrink:0;white-space:nowrap}
 
 /* ── RSI gauge ── */
 .rsi-box{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:14px;
@@ -158,26 +160,26 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:13
 
 /* ── OI Table ── */
 .oi-section{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);overflow:hidden}
-.oi-header{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
-.oi-tabs{display:flex;gap:0}
-.oi-tab{padding:5px 14px;font-size:11px;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s}
+.oi-header{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;overflow-x:auto}
+.oi-tabs{display:flex;gap:0;flex-wrap:wrap}
+.oi-tab{padding:5px 14px;font-size:11px;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;white-space:nowrap}
 .oi-tab.active-long{color:var(--green);border-bottom-color:var(--green)}
 .oi-tab.active-short{color:var(--red);border-bottom-color:var(--red)}
 .oi-tab:hover{color:var(--text)}
-.oi-meta{font-size:10px;color:var(--muted);font-family:var(--mono)}
+.oi-meta{font-size:10px;color:var(--muted);font-family:var(--mono);white-space:nowrap}
 .oi-cols{display:grid;grid-template-columns:32px 1fr 90px 90px 90px 80px;
   padding:6px 16px;font-size:9px;letter-spacing:1.5px;color:var(--muted);
-  text-transform:uppercase;border-bottom:1px solid var(--border);background:var(--bg3)}
+  text-transform:uppercase;border-bottom:1px solid var(--border);background:var(--bg3);overflow-x:auto}
 .oi-row{display:grid;grid-template-columns:32px 1fr 90px 90px 90px 80px;
-  padding:10px 16px;border-bottom:1px solid var(--border);align-items:center;cursor:pointer;transition:background .15s}
+  padding:10px 16px;border-bottom:1px solid var(--border);align-items:center;cursor:pointer;transition:background .15s;overflow-x:auto}
 .oi-row:last-child{border-bottom:none}
 .oi-row:hover{background:var(--bg3)}
-.oi-rank{font-family:var(--mono);font-size:11px;color:var(--muted)}
-.oi-sym-name{font-family:var(--mono);font-size:13px;font-weight:500}
-.oi-price{font-family:var(--mono);font-size:12px;text-align:right}
-.oi-change{font-family:var(--mono);font-size:11px;text-align:right}
-.oi-total{font-family:var(--mono);font-size:11px;color:var(--muted);text-align:right}
-.oi-vol{font-family:var(--mono);font-size:11px;text-align:right}
+.oi-rank{font-family:var(--mono);font-size:11px;color:var(--muted);flex-shrink:0;min-width:30px}
+.oi-sym-name{font-family:var(--mono);font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.oi-price{font-family:var(--mono);font-size:12px;text-align:right;flex-shrink:0}
+.oi-change{font-family:var(--mono);font-size:11px;text-align:right;flex-shrink:0}
+.oi-total{font-family:var(--mono);font-size:11px;color:var(--muted);text-align:right;flex-shrink:0}
+.oi-vol{font-family:var(--mono);font-size:11px;text-align:right;flex-shrink:0}
 .oi-bar-wrap{width:100%;height:3px;background:var(--hint);border-radius:2px;margin-top:3px}
 .oi-bar-fill{height:100%;border-radius:2px}
 
@@ -202,37 +204,37 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:13
 .coins-th-row{display:grid;grid-template-columns:30px 124px 88px 60px 60px 74px 78px 70px 96px 150px;
   padding:7px 14px;border-bottom:1px solid var(--border);background:var(--bg3);
   font-size:9px;letter-spacing:1px;color:var(--muted);text-transform:uppercase;align-items:center;
-  position:sticky;top:105px;z-index:4;box-shadow:0 1px 0 var(--border)}
+  position:sticky;top:105px;z-index:4;box-shadow:0 1px 0 var(--border);overflow-x:auto}
 .coin-row{display:grid;grid-template-columns:30px 124px 88px 60px 60px 74px 78px 70px 96px 150px;
-  padding:8px 14px;border-bottom:1px solid var(--border);align-items:center;transition:background .12s}
-.summary-cell{padding:12px 20px;border-right:1px solid var(--border);background:var(--bg2);min-height:64px;display:flex;flex-direction:column;justify-content:center}
+  padding:8px 14px;border-bottom:1px solid var(--border);align-items:center;transition:background .12s;overflow-x:auto;min-width:min-content}
+.summary-cell{padding:12px 20px;border-right:1px solid var(--border);background:var(--bg2);min-height:64px;display:flex;flex-direction:column;justify-content:center;overflow:hidden}
 .summary-cell:last-child{border-right:none}
-.summary-cell-label{font-size:9px;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase;margin-bottom:6px}
-.summary-cell-val{font-family:var(--mono);font-size:18px;font-weight:600}
-.summary-cell-sub{font-size:10px;color:var(--muted);margin-top:3px}
+.summary-cell-label{font-size:9px;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase;margin-bottom:6px;white-space:nowrap}
+.summary-cell-val{font-family:var(--mono);font-size:18px;font-weight:600;word-break:break-word}
+.summary-cell-sub{font-size:10px;color:var(--muted);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .coin-filter-btn{background:var(--bg3);border:1px solid var(--border);border-radius:5px;
-  color:var(--muted);font-family:var(--mono);font-size:10px;padding:5px 10px;cursor:pointer;transition:all .15s}
+  color:var(--muted);font-family:var(--mono);font-size:10px;padding:5px 10px;cursor:pointer;transition:all .15s;white-space:nowrap}
 .coin-filter-btn:hover{border-color:var(--border2);color:var(--text)}
 .coin-filter-btn.active{background:var(--amber-dim);border-color:var(--amber);color:var(--amber)}
 .coin-row:last-child{border-bottom:none}
 .coin-row:hover{background:var(--bg3)}
-.coin-rank{font-family:var(--mono);font-size:11px;color:var(--hint)}
-.coin-name-wrap{display:flex;align-items:center;gap:8px}
+.coin-rank{font-family:var(--mono);font-size:11px;color:var(--hint);flex-shrink:0}
+.coin-name-wrap{display:flex;align-items:center;gap:8px;min-width:0;overflow:hidden}
 .coin-icon{width:26px;height:26px;border-radius:50%;background:var(--bg4);display:flex;align-items:center;
   justify-content:center;font-size:10px;font-weight:700;font-family:var(--mono);flex-shrink:0;border:1px solid var(--border)}
-.coin-sym{font-family:var(--mono);font-size:12px;font-weight:600}
-.coin-full{font-size:9px;color:var(--muted);margin-top:1px}
-.coin-price{font-family:var(--mono);font-size:12px;text-align:right}
-.coin-chg{font-family:var(--mono);font-size:11px;text-align:right;padding:2px 6px;border-radius:3px;display:inline-block}
+.coin-sym{font-family:var(--mono);font-size:12px;font-weight:600;white-space:nowrap}
+.coin-full{font-size:9px;color:var(--muted);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.coin-price{font-family:var(--mono);font-size:12px;text-align:right;flex-shrink:0;white-space:nowrap}
+.coin-chg{font-family:var(--mono);font-size:11px;text-align:right;padding:2px 6px;border-radius:3px;display:inline-block;flex-shrink:0;white-space:nowrap}
 .coin-chg-pos{color:var(--green);background:var(--green-dim)}
 .coin-chg-neg{color:var(--red);background:var(--red-dim)}
 .coin-chg-neu{color:var(--muted)}
 .coin-chg.real-1h{position:relative}
 .coin-chg.real-1h::after{content:'';position:absolute;top:1px;right:1px;width:3px;height:3px;border-radius:50%;background:currentColor;opacity:.5}
-.coin-vol{font-family:var(--mono);font-size:11px;color:var(--muted);text-align:right}
-.coin-hl{text-align:right;font-family:var(--mono);font-size:10px}
+.coin-vol{font-family:var(--mono);font-size:11px;color:var(--muted);text-align:right;flex-shrink:0;white-space:nowrap}
+.coin-hl{text-align:right;font-family:var(--mono);font-size:10px;flex-shrink:0;white-space:nowrap}
 .trade-chip{padding:4px 8px;border-radius:4px;font-family:var(--mono);font-size:10px;cursor:pointer;
-  border:1px solid;transition:all .2s;letter-spacing:.3px;white-space:nowrap}
+  border:1px solid;transition:all .2s;letter-spacing:.3px;white-space:nowrap;flex-shrink:0}
 .trade-chip-long{background:var(--green-dim);border-color:rgba(0,200,150,.3);color:var(--green)}
 .trade-chip-long:hover{background:var(--green);color:#0a0b0f}
 .trade-chip-short{background:var(--red-dim);border-color:rgba(255,61,90,.3);color:var(--red)}
@@ -344,33 +346,55 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:13
 
 @media (max-width: 900px){
   .layout{grid-template-columns:0 1fr}
+  .content{padding:12px}
+  
   /* 漢堡按鈕在手機才出現 */
-  .mobile-menu-btn{display:inline-flex;align-items:center;justify-content:center}
+  .mobile-menu-btn{display:inline-flex !important;align-items:center;justify-content:center}
+  
   /* sidebar 改為下拉式：預設隱藏，加 .mobile-open 才顯示 */
-  .sidebar{display:none;position:fixed !important;top:48px;left:0;right:0;width:100% !important;height:auto !important;max-height:calc(100vh - 48px);
-    overflow-y:auto;z-index:9000;background:var(--bg2);border-bottom:1px solid var(--border);
-    box-shadow:0 8px 24px rgba(0,0,0,.4);padding:8px 0}
+  .sidebar{display:none !important;position:fixed !important;top:48px;left:0;right:0;width:100vw !important;
+    height:auto !important;max-height:calc(100vh - 48px);overflow-y:auto;z-index:9000;background:var(--bg2);
+    border-bottom:1px solid var(--border);box-shadow:0 8px 24px rgba(0,0,0,.4);padding:8px 0}
   .sidebar.mobile-open{display:block !important}
-  .nav-item{padding:14px 20px;font-size:14px}  /* 手指好按 */
+  .nav-item{padding:14px 20px;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .nav-item.nav-sub{padding-left:36px}
+  
   /* 點擊外部關閉 */
-  .mobile-nav-backdrop{display:none;position:fixed;top:48px;left:0;right:0;bottom:0;
+  .mobile-nav-backdrop{display:none !important;position:fixed;top:48px;left:0;right:0;bottom:0;
     background:rgba(0,0,0,.5);z-index:8999}
-  .mobile-nav-backdrop.show{display:block}
+  .mobile-nav-backdrop.show{display:block !important}
 
   .top-row{grid-template-columns:1fr}
   .alert-grid{grid-template-columns:1fr}
   .kpi-strip{grid-template-columns:repeat(3,1fr)}
+  
+  /* OI 表格手機適應 */
+  .oi-cols{grid-template-columns:30px 1fr 70px 70px !important;font-size:8px}
+  .oi-row{grid-template-columns:30px 1fr 70px 70px !important;font-size:10px}
+  .oi-rank{display:none}
+  
+  /* 幣種表手機適應 */
   .coins-th-row,#coins-table-header{display:none}
-  .coin-row{grid-template-columns:36px 1fr 90px 60px 90px !important;font-size:11px}
+  .coin-row{grid-template-columns:32px 1fr 70px 70px !important;font-size:11px;gap:6px}
+  .coin-sym,.coin-full{font-size:11px}
+  .coin-price,.coin-chg{font-size:10px}
+  .coin-vol,.coin-hl{display:none}
+  
+  /* 訊號表手機適應 */
+  .sig-cols{grid-template-columns:1fr 80px 80px !important;font-size:8px}
+  .sig-row{grid-template-columns:1fr 80px 80px !important;font-size:9px}
+  
   .grid{grid-template-columns:1fr}
 
   /* topbar 在手機收緊：標誌縮小、跑馬燈式價格 */
-  .topbar{padding:0 12px}
-  .brand-main{font-size:12px;letter-spacing:1px}
-  .brand-tag{font-size:9px;padding:1px 5px}
-  .topbar-prices{gap:10px;overflow-x:auto;flex:1;justify-content:flex-end}
+  .topbar{padding:0 8px;height:44px}
+  .logo{gap:8px}
+  .brand-main{font-size:11px;letter-spacing:0.5px}
+  .brand-tag{font-size:8px;padding:1px 4px}
+  .topbar-prices{gap:6px;overflow-x:auto;flex:1;justify-content:flex-end}
   .tp-item{flex-shrink:0}
+  .tp-sym{font-size:9px}
+  .tp-price{font-size:10px}
   .topbar-right{display:none}  /* 手機隱藏時鐘節省空間 */
 }
 @media (max-width:600px){
@@ -378,10 +402,30 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:13
   .kpi-strip{grid-template-columns:repeat(2,1fr)}
   .topbar-prices .tp-item:nth-child(3){display:none}
   .alert-grid{grid-template-columns:1fr}
+  .content{padding:8px}
+  
   /* 數據訊號卡 — 可複製點位放大（手指好按）*/
   .syc-card .copy-badge{font-size:13px !important;padding:8px 10px !important;min-height:32px}
   /* 背離卡也一樣 */
   .div-card{padding:14px !important}
+  
+  /* 超小屏幕隱藏非必要信息 */
+  .brand-tag{display:none}
+  .topbar-prices{max-width:200px}
+  
+  /* OI更激進的收縮 */
+  .oi-cols{grid-template-columns:1fr 60px 60px !important;font-size:7px}
+  .oi-row{grid-template-columns:1fr 60px 60px !important}
+  .oi-sym-name{font-size:10px}
+  .oi-price,.oi-change{font-size:9px}
+  
+  /* 訊號卡也收縮 */
+  .sig-cols{grid-template-columns:1fr 60px !important;font-size:7px}
+  .sig-row{grid-template-columns:1fr 60px !important}
+  .sig-sym{font-size:10px}
+  
+  /* 幣種表進一步簡化 */
+  .coin-row{grid-template-columns:28px 1fr 60px !important;font-size:10px}
 }
 
 /* ── 即時新聞 ── */

@@ -106,13 +106,14 @@ html{overflow-x:hidden;width:100%}
 .rsi-box{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:14px;
   display:flex;flex-direction:column;align-items:center}
 .rsi-title{font-size:11px;letter-spacing:1px;color:var(--muted);text-transform:uppercase;margin-bottom:8px;align-self:flex-start}
-.gauge-wrap{position:relative;width:240px;height:135px;margin:0 auto}
-.gauge-svg{width:240px;height:148px}
+.gauge-wrap{position:relative;width:240px;max-width:100%;aspect-ratio:240/135;height:auto;margin:0 auto}
+.gauge-svg{width:100%;height:100%;display:block}
 .rsi-number{font-family:var(--mono);font-size:46px;font-weight:700;text-align:center;margin-top:-2px}
 .rsi-label{font-size:14px;color:var(--muted);text-align:center;margin-top:4px}
 .rsi-compare{font-size:12px;color:var(--muted);text-align:center;margin-top:6px}
-.rsi-zones{display:flex;justify-content:space-between;width:100%;margin-top:14px;padding:0 6px}
-.rsi-zone{font-size:11px;letter-spacing:.5px;text-align:center}
+.rsi-zones{display:flex;justify-content:space-between;width:100%;margin-top:14px;padding:0 6px;
+  gap:4px;overflow-x:auto}
+.rsi-zone{font-size:11px;letter-spacing:.5px;text-align:center;white-space:nowrap;flex-shrink:0}
 /* 指標輪播 */
 .carousel-head{display:flex;align-items:center;justify-content:space-between;width:100%;margin-bottom:6px}
 .carousel-title{font-size:12px;font-weight:600;color:var(--text);letter-spacing:.5px}
@@ -141,8 +142,8 @@ html{overflow-x:hidden;width:100%}
   font-size:13px;letter-spacing:1px;color:var(--muted);text-transform:uppercase;font-weight:600}
 #gauge-carousel .carousel-panel{position:relative;padding-top:38px}
 /* 甜甜圈 (整體市場) */
-.donut-wrap{width:190px;height:190px;margin:6px auto 4px}
-.donut-svg{width:190px;height:190px}
+.donut-wrap{width:190px;max-width:100%;aspect-ratio:1/1;height:auto;margin:6px auto 4px}
+.donut-svg{width:100%;height:100%;display:block}
 .breadth-rows{width:100%;display:flex;flex-direction:column;gap:9px;margin-top:8px;padding:0 10px}
 .breadth-row{display:flex;align-items:center;gap:10px}
 .breadth-lbl{font-size:14px;font-weight:600;width:22px;flex-shrink:0}
@@ -390,6 +391,20 @@ html{overflow-x:hidden;width:100%}
   
   .grid{grid-template-columns:1fr}
 
+  /* 4個儀表盤（RSI/恐懼貪婪/整體市場/山寨季）：縮小數字與zone標籤字體、
+     減少padding，讓較長的標籤（如「偏BTC」「偏山寨」）能在窄面板內單行顯示，
+     不需要左右滑動。gauge-wrap/gauge-svg/donut-wrap 本身已用 aspect-ratio
+     響應式縮放，這裡只需微調文字大小配合縮小後的面板寬度。*/
+  .rsi-box{padding:10px}
+  .rsi-number{font-size:36px}
+  .rsi-label{font-size:12px}
+  .rsi-compare{font-size:10px}
+  .rsi-zones{padding:0 2px;gap:2px;margin-top:10px}
+  .rsi-zone{font-size:9px;letter-spacing:0}
+  .breadth-rows{padding:0 4px}
+  .breadth-lbl{font-size:12px;width:18px}
+  .breadth-num{font-size:13px;width:36px}
+
   /* topbar 在手機收緊：標誌縮小、跑馬燈式價格 */
   .topbar{padding:0 8px;height:44px}
   .logo{gap:8px}
@@ -418,7 +433,10 @@ html{overflow-x:hidden;width:100%}
 @media (max-width:600px){
   .top-row{grid-template-columns:1fr}
   .kpi-strip{grid-template-columns:repeat(2,1fr)}
-  .topbar-prices .tp-item:nth-child(3){display:none}
+  /* SOL 不再強制隱藏：保留在 DOM 內，容器寬度不足時可透過左右滑動查看，
+     而不是讓使用者完全看不到/摸不到第三個幣種的資訊。
+     右側加一條淡出漸層暗示「還有更多」可以滑動。*/
+  .topbar-prices{position:relative;mask-image:linear-gradient(to right,#000 calc(100% - 14px),transparent 100%);-webkit-mask-image:linear-gradient(to right,#000 calc(100% - 14px),transparent 100%)}
   .alert-grid{grid-template-columns:1fr}
   .content{padding:8px}
   

@@ -395,7 +395,11 @@ html{overflow-x:hidden;width:100%}
   .logo{gap:8px}
   .brand-main{font-size:11px;letter-spacing:0.5px}
   .brand-tag{font-size:8px;padding:1px 4px}
-  .topbar-prices{gap:6px;overflow-x:auto;flex:1;justify-content:flex-end}
+  /* 關鍵修復：justify-content 改為 flex-start，讓 BTC（第一個項目）永遠從容器左邊
+     開始完整顯示。原本用 flex-end 會把內容往右推，內容寬度一旦超過容器，
+     溢出的部分會被擠到左邊界之外而看不到（卻又無法直覺滑動看到），
+     導致 BTC 文字被攔腰裁掉、只露出價格尾數。*/
+  .topbar-prices{gap:6px;overflow-x:auto;flex:1;justify-content:flex-start;min-width:0}
   .tp-item{flex-shrink:0}
   .tp-sym{font-size:9px}
   .tp-price{font-size:10px}
@@ -425,7 +429,10 @@ html{overflow-x:hidden;width:100%}
   
   /* 超小屏幕隱藏非必要信息 */
   .brand-tag{display:none}
-  .topbar-prices{max-width:200px}
+  /* 移除之前的 max-width:200px 人為限制 — 那正是造成 BTC 被裁切的元凶之一。
+     現在讓 topbar-prices 用 flex:1 自然取得剩餘空間即可，搭配 flex-start
+     可確保 BTC 永遠完整可見，多出的 ETH 若放不下則整個隱藏（見下方規則）
+     而不是被裁切一半。*/
   
   /* OI更激進的收縮 */
   .oi-cols{grid-template-columns:1fr 60px 60px !important;font-size:7px}

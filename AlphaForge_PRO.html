@@ -378,12 +378,30 @@ html{overflow-x:hidden;width:100%}
   .oi-row{grid-template-columns:30px 1fr 70px 70px !important;font-size:10px}
   .oi-rank{display:none}
   
-  /* 幣種表手機適應 */
+  /* 幣種表手機適應 — 關鍵修復：renderCoinRow() 每行實際產生 10 個子元素
+     (排名/名稱/價格/1h漲跌/24h漲跌/費率/OI/多空比/成交量/操作按鈕)，
+     但 grid-template-columns 只定義 4 欄會導致 CSS Grid 自動把多出的
+     6 個元素換行擠成額外的隱藏 row、整欄錯位（這就是之前「多」按鈕消失、
+     數字亂跑的根因）。正確做法：先用 display:none 隱藏次要欄位，
+     讓「可見元素數」與「grid 欄數」一致，而不是只縮小欄寬。*/
   .coins-th-row,#coins-table-header{display:none}
-  .coin-row{grid-template-columns:32px 1fr 70px 70px !important;font-size:11px;gap:6px}
+  .coin-row{grid-template-columns:20px 1fr 62px 55px 64px !important;font-size:11px;gap:5px;padding:9px 6px}
   .coin-sym,.coin-full{font-size:11px}
-  .coin-price,.coin-chg{font-size:10px}
-  .coin-vol,.coin-hl{display:none}
+  .coin-col-price{font-size:11px}
+  .coin-chg{font-size:10px;padding:1px 4px}
+  /* 手機只保留：排名/名稱/價格/24h漲跌/多空按鈕，其餘（1h漲跌/費率/OI/多空比/成交量）隱藏 */
+  .coin-col-chg1h,.coin-col-fr,.coin-col-oi,.coin-col-ls,.coin-col-vol{display:none !important}
+  .coin-col-actions{gap:3px !important}
+  .coin-col-actions .spark-wrap{display:none !important}  /* 手機隱藏走勢圖，把空間留給交易按鈕 */
+  .trade-chip{padding:3px 5px !important;font-size:9px !important}
+  
+  /* 幣種一覽摘要列（總幣種數/上漲下跌/24H成交量/最強漲幅/最大跌幅）：
+     手機只留前3項，避免5欄擠爆；且確保它不是 sticky（若是 sticky，
+     在 Android 長截圖/捲動擷取時會在每個拼接邊界處重複出現，
+     造成畫面看起來像和下方幣種列重疊）*/
+  #market-summary-bar{grid-template-columns:repeat(3,1fr) !important;position:static !important}
+  #market-summary-bar .summary-cell:nth-child(4),
+  #market-summary-bar .summary-cell:nth-child(5){display:none !important}
   
   /* 訊號表手機適應 */
   .sig-cols{grid-template-columns:1fr 80px 80px !important;font-size:8px}
@@ -471,8 +489,10 @@ html{overflow-x:hidden;width:100%}
   .sector-stat-avgchg{display:none !important}
 }
 @media (max-width:480px){
-  /* 幣種一覽摘要列在更窄螢幕改為可橫向滑動，而非硬擠5欄 */
-  #market-summary-bar{grid-template-columns:repeat(5,minmax(100px,1fr)) !important;overflow-x:auto !important}
+  /* 已在 900px breakpoint 統一處理：只顯示前3格(總幣種數/上漲下跌/24H成交量)，
+     並用 repeat(3,1fr) 讓grid軌道數與可見cell數一致。這裡不再覆寫，
+     避免兩條規則衝突造成 grid 軌道數與可見元素數不匹配（5軌道但只3個
+     可見cell，會在右側留下2個空軌道的空白)。*/
 }
 
 /* ── 即時新聞 ── */
@@ -3285,14 +3305,14 @@ function renderCoinRow(c, rank){
         <div class="coin-full" style="color:var(--purple);opacity:.7">SWAP 永續</div>
       </div>
     </div>
-    <div class="live-price" data-sym="${c.sym}" style="font-family:var(--mono);font-size:12px;text-align:right">${fmtP(c.price)}</div>
-    <div style="text-align:right"><span class="coin-chg ${chgCls(chg1hVal)}${has1h?' real-1h':''}" data-chg1h="${c.sym}">${chgTxt(chg1hVal)}</span></div>
-    <div style="text-align:right"><span class="coin-chg ${chgCls(c.chg24h)}">${chgTxt(c.chg24h)}</span></div>
-    <div style="text-align:right;font-family:var(--mono);font-size:10px;color:${frCol}" data-fr="${c.sym}">${frTxt}</div>
-    <div style="text-align:right;font-family:var(--mono);font-size:10px;color:var(--text)" data-oi="${c.sym}">${oiTxt}</div>
-    <div style="text-align:right;font-family:var(--mono);font-size:10px;color:${lsCol}" data-ls="${c.sym}">${lsTxt}</div>
-    <div style="font-family:var(--mono);font-size:11px;color:var(--muted);text-align:right">${fmtVol(c.volUsd)}</div>
-    <div style="display:flex;gap:5px;justify-content:flex-end;align-items:center">
+    <div class="live-price coin-col-price" data-sym="${c.sym}" style="font-family:var(--mono);font-size:12px;text-align:right">${fmtP(c.price)}</div>
+    <div class="coin-col-chg1h" style="text-align:right"><span class="coin-chg ${chgCls(chg1hVal)}${has1h?' real-1h':''}" data-chg1h="${c.sym}">${chgTxt(chg1hVal)}</span></div>
+    <div class="coin-col-chg24h" style="text-align:right"><span class="coin-chg ${chgCls(c.chg24h)}">${chgTxt(c.chg24h)}</span></div>
+    <div class="coin-col-fr" style="text-align:right;font-family:var(--mono);font-size:10px;color:${frCol}" data-fr="${c.sym}">${frTxt}</div>
+    <div class="coin-col-oi" style="text-align:right;font-family:var(--mono);font-size:10px;color:var(--text)" data-oi="${c.sym}">${oiTxt}</div>
+    <div class="coin-col-ls" style="text-align:right;font-family:var(--mono);font-size:10px;color:${lsCol}" data-ls="${c.sym}">${lsTxt}</div>
+    <div class="coin-col-vol" style="font-family:var(--mono);font-size:11px;color:var(--muted);text-align:right">${fmtVol(c.volUsd)}</div>
+    <div class="coin-col-actions" style="display:flex;gap:5px;justify-content:flex-end;align-items:center">
       ${sparklineSvg(c)}
       <button class="trade-chip trade-chip-long" data-sym="${c.sym}" data-price="${fmtP(c.price)}" data-side="long"
         onclick="event.stopPropagation();openOkxModal(this.dataset.sym,this.dataset.price,this.dataset.side)" title="${c.sym} 做多">多</button>

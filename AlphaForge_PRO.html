@@ -631,9 +631,12 @@ html{overflow-x:hidden;width:100%}
   padding:13px 16px;z-index:999;box-shadow:0 8px 32px rgba(0,0,0,.55);
   transition:right .35s cubic-bezier(.4,0,.2,1);font-size:.82rem}
 .signal-toast.show{right:20px}
-.signal-toast.toast-pump{border-left-color:var(--green);background:rgba(34,197,94,.08)}
-.signal-toast.toast-crash{border-left-color:var(--red);background:rgba(239,68,68,.08)}
-.signal-toast.toast-divergence{border-left-color:var(--purple);background:rgba(155,125,255,.06)}
+.signal-toast.toast-pump{border-left-color:var(--green);
+  background:linear-gradient(rgba(34,197,94,.12),rgba(34,197,94,.12)),var(--bg2)}
+.signal-toast.toast-crash{border-left-color:var(--red);
+  background:linear-gradient(rgba(239,68,68,.12),rgba(239,68,68,.12)),var(--bg2)}
+.signal-toast.toast-divergence{border-left-color:var(--purple);
+  background:linear-gradient(rgba(155,125,255,.12),rgba(155,125,255,.12)),var(--bg2)}
 .signal-toast-label{font-size:.68rem;font-weight:700;color:var(--amber);text-transform:uppercase;
   letter-spacing:.8px;margin-bottom:5px}
 .toast-pump .signal-toast-label{color:var(--green)}
@@ -645,10 +648,12 @@ html{overflow-x:hidden;width:100%}
   color:var(--muted);font-size:1rem;cursor:pointer;line-height:1}
 .signal-toast-close:hover{color:var(--text)}
 /* ── 持倉異常三級 ── */
-.alert-card.anom-pump{border-color:rgba(34,197,94,.5)!important;background:rgba(34,197,94,.06)!important}
+.alert-card.anom-pump{border-color:rgba(34,197,94,.5)!important;
+  background:linear-gradient(rgba(34,197,94,.1),rgba(34,197,94,.1)),var(--bg2)!important}
 .alert-card.anom-pump::before{background:var(--green)!important;width:4px!important}
 .alert-card.anom-pump .ac-sym{color:var(--green)}
-.alert-card.anom-crash{border-color:rgba(239,68,68,.5)!important;background:rgba(239,68,68,.06)!important}
+.alert-card.anom-crash{border-color:rgba(239,68,68,.5)!important;
+  background:linear-gradient(rgba(239,68,68,.1),rgba(239,68,68,.1)),var(--bg2)!important}
 .alert-card.anom-crash::before{background:var(--red)!important;width:4px!important}
 .alert-card.anom-crash .ac-sym{color:var(--red)}
 .anom-level-badge{font-size:9px;font-weight:700;padding:2px 7px;border-radius:3px;margin-left:6px}

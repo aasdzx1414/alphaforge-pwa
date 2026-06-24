@@ -497,6 +497,40 @@ html{overflow-x:hidden;width:100%}
      可見cell，會在右側留下2個空軌道的空白)。*/
 }
 
+/* ── 學習資源 ── */
+.learn-section{background:var(--bg2);border:1px solid var(--border);border-radius:8px;margin-bottom:10px;overflow:hidden}
+.learn-header{display:flex;align-items:center;gap:10px;padding:14px 16px;cursor:pointer;transition:background .15s;user-select:none}
+.learn-header:hover{background:var(--bg3)}
+.learn-header-icon{font-size:18px;width:26px;text-align:center;flex-shrink:0}
+.learn-header-title{flex:1;font-size:14px;font-weight:600;color:var(--text)}
+.learn-header-sub{font-size:10px;color:var(--muted);margin-top:1px}
+.learn-header-arrow{color:var(--muted);font-size:11px;transition:transform .2s;flex-shrink:0}
+.learn-header.open .learn-header-arrow{transform:rotate(90deg)}
+.learn-body{max-height:0;overflow:hidden;transition:max-height .25s ease}
+.learn-body.open{max-height:none}
+.learn-body-inner{padding:2px 16px 18px 16px;font-size:12.5px;line-height:1.85;color:var(--muted);border-top:1px solid var(--border)}
+.learn-body-inner h4{color:var(--amber);font-size:12.5px;margin:16px 0 8px;font-weight:700;display:flex;align-items:center;gap:6px}
+.learn-body-inner h4:first-child{margin-top:14px}
+.learn-body-inner p{margin-bottom:8px}
+.learn-body-inner ul,.learn-body-inner ol{margin:6px 0 12px 4px;padding-left:18px}
+.learn-body-inner li{margin-bottom:5px}
+.learn-tip{background:var(--bg3);border-left:3px solid var(--amber);padding:9px 12px;border-radius:4px;margin:10px 0;color:var(--text);font-size:12px}
+.learn-tip b{color:var(--amber)}
+.learn-warn{background:rgba(255,61,90,.08);border-left:3px solid var(--red);padding:9px 12px;border-radius:4px;margin:10px 0;color:var(--text);font-size:12px}
+.learn-warn b{color:var(--red)}
+.learn-step{display:flex;gap:10px;margin-bottom:11px;align-items:flex-start}
+.learn-step-num{flex-shrink:0;width:21px;height:21px;border-radius:50%;background:var(--amber-dim);color:var(--amber);
+  display:flex;align-items:center;justify-content:center;font-size:10.5px;font-weight:700;margin-top:1px}
+.learn-step-txt{flex:1;color:var(--text);padding-top:1px}
+.learn-body-inner code{background:var(--bg4);padding:1px 6px;border-radius:3px;font-family:var(--mono);font-size:11px;color:var(--green-l)}
+.learn-sub-tabs{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
+.learn-sub-tab{font-size:11px;padding:5px 12px;border-radius:5px;border:1px solid var(--border2);background:var(--bg3);color:var(--muted);cursor:pointer;transition:all .15s}
+.learn-sub-tab.active{background:var(--amber-dim);border-color:var(--amber);color:var(--amber)}
+.learn-platform-block{display:none}
+.learn-platform-block.active{display:block}
+.learn-badge-icon{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:5px;
+  background:var(--bg4);font-size:11px;margin-right:4px;vertical-align:middle}
+
 /* ── 即時新聞 ── */
 .news-tab{background:var(--bg3);border:1px solid var(--border);border-radius:4px;
   color:var(--muted);font-family:var(--mono);font-size:10px;padding:4px 10px;cursor:pointer;transition:all .15s}
@@ -1045,7 +1079,7 @@ window.addEventListener('unhandledrejection', function(e){
 
     <div class="nav-section">工具</div>
     <div class="nav-item nav-sub" id="nav-calc" onclick="switchPage('calc',this)"><span class="nav-icon">🔢</span>倉位計算機</div>
-    <div class="nav-item nav-sub"><span class="nav-icon">💡</span>學習資源</div>
+    <div class="nav-item nav-sub" id="nav-learn" onclick="switchPage('learn',this)"><span class="nav-icon">💡</span>學習資源</div>
     <div class="nav-item nav-sub" onclick="openTgSettings()"><span class="nav-icon">🔔</span>推送設定</div>
     <div class="nav-item nav-sub"><span class="nav-icon">📝</span>意見反饋</div>
   </div>
@@ -1511,6 +1545,268 @@ window.addEventListener('unhandledrejection', function(e){
       </div>
     </div>
   </div><!-- /page-calc -->
+
+  <!-- 學習資源 -->
+  <div id="page-learn" style="display:none;flex:1;overflow-y:auto;background:var(--bg);flex-direction:column;padding:20px">
+    <div style="max-width:780px;margin:0 auto;width:100%">
+
+      <div style="margin-bottom:4px">
+        <span style="font-family:var(--mono);font-size:16px;font-weight:700;color:var(--text)">💡 學習資源</span>
+      </div>
+      <div style="font-size:11.5px;color:var(--muted);margin-bottom:18px">安裝教學、網站介紹與各頁籤使用說明 — 點擊標題展開內容</div>
+
+      <!-- ════ 1. 安裝教學 ════ -->
+      <div class="learn-section">
+        <div class="learn-header" id="learn-header-install" onclick="toggleLearnSection('install')">
+          <span class="learn-header-icon">📲</span>
+          <div>
+            <div class="learn-header-title">安裝教學</div>
+            <div class="learn-header-sub">把 AlphaForge PRO 加到手機桌面，像 App 一樣使用</div>
+          </div>
+          <span class="learn-header-arrow">▶</span>
+        </div>
+        <div class="learn-body" id="learn-body-install">
+          <div class="learn-body-inner">
+            <p>AlphaForge PRO 是一個 PWA（Progressive Web App），加到桌面後可以全螢幕開啟、沒有網址列，體驗跟原生 App 幾乎一樣，而且會自動更新，不用額外安裝任何東西。</p>
+
+            <div class="learn-sub-tabs">
+              <div class="learn-sub-tab active" onclick="switchLearnTab('install',this,'android')">🤖 Android（Chrome）</div>
+              <div class="learn-sub-tab" onclick="switchLearnTab('install',this,'ios')">🍎 iPhone（Safari）</div>
+            </div>
+
+            <div class="learn-platform-block active" id="learn-install-android">
+              <div class="learn-step"><div class="learn-step-num">1</div><div class="learn-step-txt">用 <b>Chrome</b> 瀏覽器開啟 AlphaForge PRO 網址</div></div>
+              <div class="learn-step"><div class="learn-step-num">2</div><div class="learn-step-txt">點右上角選單 <code>⋮</code></div></div>
+              <div class="learn-step"><div class="learn-step-num">3</div><div class="learn-step-txt">選擇「<b>安裝應用程式</b>」或「<b>新增至主畫面</b>」</div></div>
+              <div class="learn-step"><div class="learn-step-num">4</div><div class="learn-step-txt">確認安裝，圖示就會出現在桌面上</div></div>
+              <div class="learn-tip">💡 部分機型（如三星 Internet 瀏覽器）選單文字可能略有不同，找「加入主螢幕」類似的選項即可。</div>
+            </div>
+
+            <div class="learn-platform-block" id="learn-install-ios">
+              <div class="learn-step"><div class="learn-step-num">1</div><div class="learn-step-txt">必須用 <b>Safari</b> 開啟網址（iOS 只有 Safari 能安裝 PWA，Chrome／其他瀏覽器不支援這個功能）</div></div>
+              <div class="learn-step"><div class="learn-step-num">2</div><div class="learn-step-txt">點底部分享按鈕 <code>⬆️</code></div></div>
+              <div class="learn-step"><div class="learn-step-num">3</div><div class="learn-step-txt">往下滑，找「<b>加入主畫面</b>」</div></div>
+              <div class="learn-step"><div class="learn-step-num">4</div><div class="learn-step-txt">點右上角「<b>新增</b>」</div></div>
+              <div class="learn-warn">⚠ 如果你平常用 Chrome 開這個網站，要先用 Safari 重新開一次才能安裝，這是 iOS 系統限制，不是網站問題。</div>
+            </div>
+
+            <div class="learn-tip">📌 安裝後背景行情仍需要網路連線才能更新；關閉 App 後若太久沒開，重新打開時數據會先顯示舊快取，等幾秒鐘就會自動刷新成最新資料。</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════ 2. 網站介紹 ════ -->
+      <div class="learn-section">
+        <div class="learn-header" id="learn-header-intro" onclick="toggleLearnSection('intro')">
+          <span class="learn-header-icon">📖</span>
+          <div>
+            <div class="learn-header-title">網站介紹</div>
+            <div class="learn-header-sub">AlphaForge PRO 是什麼、資料從哪裡來</div>
+          </div>
+          <span class="learn-header-arrow">▶</span>
+        </div>
+        <div class="learn-body" id="learn-body-intro">
+          <div class="learn-body-inner">
+            <h4>🎯 這是什麼工具？</h4>
+            <p>AlphaForge PRO 是一個即時加密貨幣<b>永續合約 Orderflow 監控儀表板</b>，把分散在不同地方的籌碼面數據（持倉量、資金費率、多空比、RSI 背離等）整合在一個畫面，幫助你更快判斷市場現在的狀態，而不是只看價格走勢。</p>
+
+            <h4>📡 資料來源</h4>
+            <ul>
+              <li><b>OKX 公開 API</b> — 即時報價、24H 漲跌、成交量、持倉量（OI）、資金費率</li>
+              <li><b>Binance 公開 API</b> — 多空人數比、CVD 等輔助確認指標</li>
+              <li><b>CoinGlass</b> — 點 <span class="learn-badge-icon" style="background:#f7a600;color:#000">CG</span> 按鈕連到外部頁面查更完整的清算地圖、跨交易所 OI 等深度數據</li>
+              <li><b>TradingView</b> — 點 <span class="learn-badge-icon" style="background:var(--blue);color:#000">TV</span> 按鈕看完整K線圖表</li>
+            </ul>
+
+            <h4>👤 適合誰用？</h4>
+            <p>主要設計給<b>合約 / 永續交易者</b>使用，尤其是想觀察「資金在哪個板塊輪動」「現在是不是過熱／恐慌」「籌碼面有沒有異常」的人。如果你只看現貨、完全不交易合約，部分頁籤（如 OI 儀表板、倉位計算機）對你用處較小。</p>
+
+            <h4>⚠️ 重要提醒</h4>
+            <div class="learn-warn">
+              站內所有訊號、推薦指數、建議進場/止損價，都是<b>根據歷史數據與量化規則計算出來的參考資訊</b>，不是投資建議，也不保證未來表現。背離訊號近 7 日勝率約 50% 上下波動，代表這類訊號本質上是「提高判斷機率」而非「保證獲利」。永遠請自己做最終風控判斷，合約交易槓桿風險高，請謹慎管理倉位。
+            </div>
+
+            <h4>🔄 更新頻率</h4>
+            <p>即時行情透過 WebSocket 推送，幾乎是即時更新；OI／費率／多空比約 30–60 秒輪詢一次；背離訊號、數據訊號約每 3 分鐘重新掃描一次；新聞約 3 分鐘更新一次。</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════ 3. 各頁籤使用教學 ════ -->
+      <div class="learn-section">
+        <div class="learn-header" id="learn-header-dashboard" onclick="toggleLearnSection('dashboard')">
+          <span class="learn-header-icon">▦</span>
+          <div>
+            <div class="learn-header-title">市場儀表板</div>
+            <div class="learn-header-sub">進站首頁，一眼看全市場狀態</div>
+          </div>
+          <span class="learn-header-arrow">▶</span>
+        </div>
+        <div class="learn-body" id="learn-body-dashboard">
+          <div class="learn-body-inner">
+            <h4>🟢🔴 做多 / 做空推薦</h4>
+            <p>綜合動能、背離、OI、資金費率等多項指標算出的<b>推薦指數</b>（綠色／紅色色塊條，塊數越多代表訊號越強），列出當前最值得關注的多空候選幣種。點任一幣種可開啟詳情，含建議進場、止損、止盈參考價。</p>
+            <h4>📈 市場平均 RSI</h4>
+            <p>全市場幣種 RSI 的平均值，用來判斷<b>整體市場</b>是否處於超買／超賣區，而不是單一幣種的狀態。</p>
+            <h4>😨 恐懼貪婪指數</h4>
+            <p>市場情緒溫度計，數值越低代表市場越恐慌（可能是低點訊號），越高代表越貪婪（可能過熱）。</p>
+            <h4>🍩 整體市場（漲跌甜甜圈）</h4>
+            <p>統計全市場上漲／持平／下跌的幣種家數比例，判斷這是<b>普漲、普跌還是分歧</b>的行情。</p>
+            <h4>🌗 山寨季指數</h4>
+            <p>衡量前 N 大幣種「漲幅勝過 BTC」的比例。數值低代表<b>BTC 主導</b>（資金集中在比特幣），數值高代表<b>山寨季</b>（資金擴散到其他幣種，通常風險偏好較高）。</p>
+            <div class="learn-tip">💡 建議開站先看這頁，掌握大盤狀態後再決定要不要去幣種一覽或背離訊號頁挑標的。</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="learn-section">
+        <div class="learn-header" id="learn-header-coins" onclick="toggleLearnSection('coins')">
+          <span class="learn-header-icon">≡</span>
+          <div>
+            <div class="learn-header-title">幣種一覽</div>
+            <div class="learn-header-sub">OKX 全市場永續合約即時行情列表</div>
+          </div>
+          <span class="learn-header-arrow">▶</span>
+        </div>
+        <div class="learn-body" id="learn-body-coins">
+          <div class="learn-body-inner">
+            <p>列出 OKX 所有 USDT 結算永續合約的即時報價，可以：</p>
+            <ul>
+              <li>用搜尋框快速找幣種</li>
+              <li>依成交量／漲跌幅排序，或篩選只看上漲／下跌</li>
+              <li>點 <span class="learn-badge-icon" style="background:var(--blue);color:#000">TV</span> 開 TradingView 圖表、<span class="learn-badge-icon" style="background:#f7a600;color:#000">CG</span> 開 CoinGlass 查更多籌碼數據</li>
+              <li>點「多」／「空」按鈕直接連到 OKX 下單頁面</li>
+            </ul>
+            <div class="learn-tip">💡 頂部摘要列（總幣種數／上漲下跌家數／24H 成交量）可以快速判斷今天市場熱度跟風向。</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="learn-section">
+        <div class="learn-header" id="learn-header-oi" onclick="toggleLearnSection('oi')">
+          <span class="learn-header-icon">📊</span>
+          <div>
+            <div class="learn-header-title">OI 儀表板</div>
+            <div class="learn-header-sub">持倉量異動 = 資金進出場的足跡</div>
+          </div>
+          <span class="learn-header-arrow">▶</span>
+        </div>
+        <div class="learn-body" id="learn-body-oi">
+          <div class="learn-body-inner">
+            <h4>什麼是 OI？</h4>
+            <p><b>OI（Open Interest，未平倉合約量）</b>反映市場上還沒被平倉的合約總規模。OI 上升代表有新資金（新倉位）進場；OI 下降代表有人在平倉離場。配合價格方向一起看，可以判斷漲跌是「真資金推動」還是「軋空/逼倉造成的假象」。</p>
+            <h4>🚨 持倉異常警報</h4>
+            <p>自動偵測 OI 在短時間內急增或急減，配合價格變化方向，篩出可能的「多頭建倉」「多頭出場」「空頭建倉」「空頭回補」訊號，並標記是否觸發清算警示。</p>
+            <h4>📋 OI 異動排名</h4>
+            <p>可切換四個分類分別查看排名最前面的幣種，找出當前資金最集中流入/流出的標的。</p>
+            <div class="learn-tip">💡 OI 異常 + 價格不漲 = 可能在吸籌或洗倉；OI 異常 + 價格大漲 = 可能是趨勢確立或軋空，要分辨清楚再判斷。</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="learn-section">
+        <div class="learn-header" id="learn-header-sectors" onclick="toggleLearnSection('sectors')">
+          <span class="learn-header-icon">◈</span>
+          <div>
+            <div class="learn-header-title">幣種版塊</div>
+            <div class="learn-header-sub">看資金正在輪動到哪個敘事</div>
+          </div>
+          <span class="learn-header-arrow">▶</span>
+        </div>
+        <div class="learn-body" id="learn-body-sectors">
+          <div class="learn-body-inner">
+            <p>把幣種依產業／敘事分類（如 Layer1 公鏈、DeFi、Meme、AI 等），點版塊標題可以展開查看該分類下所有幣種的即時數據。</p>
+            <p>用途：判斷現在資金是集中在哪個敘事輪動。例如某個版塊「均漲跌」明顯領先大盤，可能代表該敘事正在被市場關注、資金正在流入。</p>
+            <div class="learn-tip">💡 版塊輪動通常是短中期行情的重要線索，留意「均漲跌」由負轉正、上漲家數比例突然上升的版塊。</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="learn-section">
+        <div class="learn-header" id="learn-header-divergence" onclick="toggleLearnSection('divergence')">
+          <span class="learn-header-icon">⚡</span>
+          <div>
+            <div class="learn-header-title">背離訊號</div>
+            <div class="learn-header-sub">價格與 RSI 背離，潛在反轉提示</div>
+          </div>
+          <span class="learn-header-arrow">▶</span>
+        </div>
+        <div class="learn-body" id="learn-body-divergence">
+          <div class="learn-body-inner">
+            <h4>什麼是背離？</h4>
+            <p><b>底背離</b>：價格創新低，但 RSI 沒有跟著創新低（反而回升）→ 代表賣壓正在衰竭，潛在反彈訊號（做多參考）。</p>
+            <p><b>頂背離</b>：價格創新高，但 RSI 沒有跟著創新高（反而回落）→ 代表買盤正在衰竭，潛在回落訊號（做空參考）。</p>
+            <div class="learn-warn">⚠ 背離只是「動能轉弱」的提示，<b>不是進場保證</b>，務必配合 MACD、OI、CVD 等其他確認指標，以及自己設定的支撐壓力位再做決定。卡片上會標示是否有 MACD/OI/CVD 確認，沒有確認的訊號可信度較低。</div>
+            <h4>📊 近 N 日勝率</h4>
+            <p>頂部統計列會顯示這套背離邏輯最近的歷史命中率，讓你知道這套規則最近「靈不靈」，但過去表現不代表未來一定重複。</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="learn-section">
+        <div class="learn-header" id="learn-header-sycamore" onclick="toggleLearnSection('sycamore')">
+          <span class="learn-header-icon">💬</span>
+          <div>
+            <div class="learn-header-title">數據訊號</div>
+            <div class="learn-header-sub">多種量化訊號的綜合掃描</div>
+          </div>
+          <span class="learn-header-arrow">▶</span>
+        </div>
+        <div class="learn-body" id="learn-body-sycamore">
+          <div class="learn-body-inner">
+            <p>整合多種訊號類型，可用上方分類按鈕篩選：</p>
+            <ul>
+              <li><b>做多／做空</b> — 偏多或偏空的綜合訊號</li>
+              <li><b>動能突破</b> — 價量同步突破關鍵區間</li>
+              <li><b>軋空／殺多</b> — 偵測可能發生強制平倉連鎖反應的標的</li>
+              <li><b>吸收</b> — 大單承接、價格滯漲滯跌的籌碼吸收現象</li>
+              <li><b>衰竭反轉</b> — 趨勢動能耗盡，可能準備反轉</li>
+            </ul>
+            <div class="learn-tip">💡 這頁適合用來快速找「現在市場上最值得多看兩眼」的標的，再去幣種一覽或 TradingView 細看圖表確認。</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="learn-section">
+        <div class="learn-header" id="learn-header-news" onclick="toggleLearnSection('news')">
+          <span class="learn-header-icon">📰</span>
+          <div>
+            <div class="learn-header-title">即時新聞</div>
+            <div class="learn-header-sub">加密貨幣快訊整合與情緒分析</div>
+          </div>
+          <span class="learn-header-arrow">▶</span>
+        </div>
+        <div class="learn-body" id="learn-body-news">
+          <div class="learn-body-inner">
+            <p>整合多個新聞源的加密貨幣快訊，可依分類篩選（Bitcoin／Ethereum／DeFi／總經／山寨幣／上所公告）。</p>
+            <p>頂部會統計<b>新聞情緒</b>（偏多／偏空／中性）與<b>多空比</b>，讓你快速感受目前輿論氛圍，但新聞情緒通常落後於價格，建議當作輔助參考而非主要進場依據。</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="learn-section">
+        <div class="learn-header" id="learn-header-calc" onclick="toggleLearnSection('calc')">
+          <span class="learn-header-icon">🔢</span>
+          <div>
+            <div class="learn-header-title">倉位計算機</div>
+            <div class="learn-header-sub">算出合理的倉位大小與止損金額</div>
+          </div>
+          <span class="learn-header-arrow">▶</span>
+        </div>
+        <div class="learn-body" id="learn-body-calc">
+          <div class="learn-body-inner">
+            <h4>怎麼用</h4>
+            <div class="learn-step"><div class="learn-step-num">1</div><div class="learn-step-txt">輸入<b>帳戶總資金</b>與你願意承擔的<b>止損風險佔比</b>（建議新手 1-2%，不要超過你能承受的最大虧損）</div></div>
+            <div class="learn-step"><div class="learn-step-num">2</div><div class="learn-step-txt">選擇<b>做多／做空</b>，輸入<b>進場價</b>與<b>止損價</b></div></div>
+            <div class="learn-step"><div class="learn-step-num">3</div><div class="learn-step-txt">系統會自動算出<b>建議槓桿倍數</b>，也可以手動調整滑桿</div></div>
+            <div class="learn-step"><div class="learn-step-num">4</div><div class="learn-step-txt">下方會顯示<b>所需保證金</b>、<b>止損金額</b>、<b>倉位總價值</b>與<b>距離強平的緩衝空間</b></div></div>
+            <div class="learn-warn">⚠ 計算結果未包含手續費與維持保證金率，僅供下單前的風控參考，實際強平價請以交易所頁面顯示的數字為準。</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div><!-- /page-learn -->
 
   <!-- 幣種版塊 -->
   <div id="page-sectors" style="display:none;flex:1;overflow-y:auto;background:var(--bg);flex-direction:column;padding:20px">
@@ -2870,8 +3166,9 @@ function switchPage(page, navEl){
   const divPage = document.getElementById('page-divergence');
   const oiPage = document.getElementById('page-oi');
   const sycPage = document.getElementById('page-sycamore');
+  const learnPage = document.getElementById('page-learn');
   // 全部隱藏
-  [dash, coins, newsPage, calcPage, sectorsPage, divPage, oiPage, sycPage].forEach(el => {
+  [dash, coins, newsPage, calcPage, sectorsPage, divPage, oiPage, sycPage, learnPage].forEach(el => {
     if(el){ el.style.display = 'none'; el.style.flex = ''; }
   });
 
@@ -2939,9 +3236,11 @@ function switchPage(page, navEl){
         loadDivergence(true);
       }
     }, 180000);
+  } else if(page === 'learn'){
+    if(learnPage){ learnPage.style.display = 'flex'; learnPage.style.flexDirection = 'column'; learnPage.style.flex = '1'; }
   }
   // 更新頁籤標題
-  const titles = {dashboard:'市場儀表板', coins:'幣種一覽', news:'即時新聞', calc:'倉位計算機', sectors:'幣種版塊', divergence:'背離訊號', sycamore:'數據訊號'};
+  const titles = {dashboard:'市場儀表板', coins:'幣種一覽', news:'即時新聞', calc:'倉位計算機', sectors:'幣種版塊', divergence:'背離訊號', sycamore:'數據訊號', learn:'學習資源'};
   document.title = (titles[page]||page) + ' · AlphaForge PRO';
 }
 
@@ -3642,6 +3941,35 @@ function toggleSector(name){
   if(_expandedSectors.has(name)) _expandedSectors.delete(name);
   else _expandedSectors.add(name);
   renderSectors();
+}
+
+/* ══ 學習資源：手風琴展開/收合 + 安裝教學平台切換 ══ */
+function toggleLearnSection(id){
+  const body = document.getElementById('learn-body-'+id);
+  const header = document.getElementById('learn-header-'+id);
+  if(!body || !header) return;
+  const isOpen = body.classList.contains('open');
+  if(isOpen){
+    body.classList.remove('open');
+    header.classList.remove('open');
+    body.style.maxHeight = '0px';
+  } else {
+    body.classList.add('open');
+    header.classList.add('open');
+    body.style.maxHeight = body.scrollHeight + 'px';
+  }
+}
+function switchLearnTab(group, btnEl, platform){
+  const parent = btnEl.closest('.learn-body-inner');
+  if(!parent) return;
+  parent.querySelectorAll('.learn-sub-tab').forEach(t=>t.classList.remove('active'));
+  btnEl.classList.add('active');
+  parent.querySelectorAll('.learn-platform-block').forEach(b=>b.classList.remove('active'));
+  const target = document.getElementById('learn-'+group+'-'+platform);
+  if(target) target.classList.add('active');
+  // 切換平台後容器高度可能改變，重新計算展開高度
+  const body = parent.closest('.learn-body');
+  if(body && body.classList.contains('open')) body.style.maxHeight = body.scrollHeight + 'px';
 }
 
 /* ══ 警報觸發明細摺疊 ══ */

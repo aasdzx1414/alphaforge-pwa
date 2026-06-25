@@ -246,7 +246,7 @@ html{overflow-x:hidden;width:100%}
 
 /* ── OKX Modal ── */
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.75);backdrop-filter:blur(4px);
-  z-index:1000;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s}
+  z-index:9500;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s}
 .modal-overlay.show{opacity:1;pointer-events:all}
 .modal{background:var(--bg3);border:1px solid var(--border2);border-radius:12px;
   width:340px;overflow:hidden;transform:translateY(12px);transition:transform .25s;box-shadow:0 24px 64px rgba(0,0,0,0.6)}
@@ -280,7 +280,7 @@ html{overflow-x:hidden;width:100%}
 
 /* ── 幣種詳情彈窗 ── */
 .detail-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.8);backdrop-filter:blur(6px);
-  z-index:500;display:flex;align-items:center;justify-content:center;
+  z-index:9500;display:flex;align-items:center;justify-content:center;
   opacity:0;pointer-events:none;transition:opacity .2s}
 .detail-overlay.show{opacity:1;pointer-events:all}
 .detail-modal{background:var(--bg3);border:1px solid var(--border2);border-radius:12px;
@@ -956,19 +956,42 @@ window.addEventListener('unhandledrejection', function(e){
       <div class="dm-sym-wrap">
         <div style="font-size:20px">🔔</div>
         <div>
-          <div class="dm-sym" style="font-size:16px">Telegram 推送設定</div>
-          <div class="dm-price" style="font-size:11px">警報觸發時自動發送到你的 Telegram</div>
+          <div class="dm-sym" style="font-size:16px">通知設定</div>
+          <div class="dm-price" style="font-size:11px">本機提示（聲音/震動）+ Telegram 遠端推送</div>
         </div>
       </div>
       <div class="modal-close" onclick="closeTgModal()">✕</div>
     </div>
 
     <div style="padding:16px 20px">
+      <!-- 本機提示：聲音 + 震動（零設定，立即可用） -->
+      <div style="margin-bottom:14px;padding:12px 14px;background:var(--bg4);border-radius:8px">
+        <div style="font-size:11px;color:var(--muted);margin-bottom:10px">本機提示 — 不需任何設定，開啟即可用</div>
+        <label style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;font-size:12.5px;cursor:pointer">
+          <span style="display:flex;align-items:center;gap:7px">🔊 聲音提示<span style="font-size:10px;color:var(--hint)">出現警報/訊號時嗶一聲</span></span>
+          <div id="local-sound-toggle" onclick="toggleLocalSound()" style="position:relative;display:inline-block;width:40px;height:22px;cursor:pointer;background:var(--hint);border-radius:22px;transition:.3s;flex-shrink:0">
+            <span id="local-sound-knob" style="position:absolute;height:16px;width:16px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.3s"></span>
+          </div>
+        </label>
+        <label style="display:flex;align-items:center;justify-content:space-between;font-size:12.5px;cursor:pointer">
+          <span style="display:flex;align-items:center;gap:7px">📳 震動提示<span style="font-size:10px;color:var(--hint)" id="vibrate-support-hint">出現警報/訊號時震動</span></span>
+          <div id="local-vibrate-toggle" onclick="toggleLocalVibrate()" style="position:relative;display:inline-block;width:40px;height:22px;cursor:pointer;background:var(--hint);border-radius:22px;transition:.3s;flex-shrink:0">
+            <span id="local-vibrate-knob" style="position:absolute;height:16px;width:16px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.3s"></span>
+          </div>
+        </label>
+        <div style="display:flex;gap:8px;margin-top:10px">
+          <button onclick="testLocalNotify(1)" style="flex:1;padding:7px;border-radius:6px;border:1px solid var(--border2);
+            background:var(--bg3);color:var(--muted);font-size:11px;cursor:pointer">測試一般通知</button>
+          <button onclick="testLocalNotify(2)" style="flex:1;padding:7px;border-radius:6px;border:1px solid var(--border2);
+            background:var(--bg3);color:var(--muted);font-size:11px;cursor:pointer">測試重要警報</button>
+        </div>
+      </div>
+
       <!-- 開關 -->
       <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--bg4);border-radius:8px;margin-bottom:14px">
         <div>
-          <div style="font-size:13px;color:var(--text)">啟用推送</div>
-          <div style="font-size:10px;color:var(--muted);margin-top:2px">偵測到符合條件的警報時推送</div>
+          <div style="font-size:13px;color:var(--text)">啟用 Telegram 推送</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:2px">偵測到符合條件的警報時推送到 Telegram</div>
         </div>
         <div id="tg-toggle" onclick="toggleTgEnabled()" style="position:relative;display:inline-block;width:44px;height:24px;cursor:pointer;background:var(--hint);border-radius:24px;transition:.3s">
           <span id="tg-toggle-knob" style="position:absolute;height:18px;width:18px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.3s"></span>
@@ -2406,6 +2429,9 @@ let _prevAlertKeys = new Set();
 
 function showToast(label, coin, body, type){
   _toastQueue.push({label, coin, body, type});
+  // pump/crash（持倉異常、止盈止損等明確結果）視為重要警報用 level 2；
+  // 其他（一般訊號出現、過期通知等）用較柔和的 level 1
+  fireLocalNotify(type==='pump'||type==='crash' ? 2 : 1);
   if(!_toastShowing) processToast();
 }
 function processToast(){
@@ -6722,6 +6748,132 @@ function renderNewsTags(){
 
 
 /* ══════════════════════════════════════
+   本機提示：聲音 + 震動
+   用 Web Audio API 即時合成提示音（不需外部音檔，最穩定可靠），
+   搭配 navigator.vibrate() 震動。設定存 localStorage，跨次開啟記得。
+══════════════════════════════════════ */
+let _audioCtx = null;
+const localNotifyPrefs = { sound: false, vibrate: false };
+loadLocalNotifyPrefs(); // 宣告後立即載入已存設定（必須放在這裡之後，否則會踩到 TDZ）
+
+function loadLocalNotifyPrefs(){
+  try {
+    const saved = JSON.parse(localStorage.getItem('localNotifyPrefs')||'null');
+    if(saved){
+      localNotifyPrefs.sound = !!saved.sound;
+      localNotifyPrefs.vibrate = !!saved.vibrate;
+    }
+  } catch(e){}
+}
+function _saveLocalNotifyPrefs(){
+  try { localStorage.setItem('localNotifyPrefs', JSON.stringify(localNotifyPrefs)); } catch(e){}
+}
+
+// AudioContext 必須在使用者手勢（click/touch）內建立或 resume，
+// 否則 Chrome/Safari 會擋住聲音播放（瀏覽器自動播放政策）。
+// 開關本身的 onclick 就是使用者手勢，藉此「解鎖」，之後背景自動觸發的
+// toast 才能正常出聲。
+function _getAudioCtx(){
+  if(!_audioCtx){
+    try { _audioCtx = new (window.AudioContext||window.webkitAudioContext)(); } catch(e){ return null; }
+  }
+  if(_audioCtx.state === 'suspended') _audioCtx.resume();
+  return _audioCtx;
+}
+
+// level 1 = 一般通知（單聲、柔和）；level 2 = 重要警報（雙聲、急促）
+function playNotifySound(level){
+  if(!localNotifyPrefs.sound) return;
+  const ctx = _getAudioCtx();
+  if(!ctx) return;
+  const beep = (freq, start, dur, vol)=>{
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(0, ctx.currentTime+start);
+    gain.gain.linearRampToValueAtTime(vol, ctx.currentTime+start+0.012);
+    gain.gain.linearRampToValueAtTime(0, ctx.currentTime+start+dur);
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.start(ctx.currentTime+start);
+    osc.stop(ctx.currentTime+start+dur+0.03);
+  };
+  if(level >= 2){
+    beep(880, 0,    0.12, 0.20);
+    beep(880, 0.16, 0.12, 0.20);
+  } else {
+    beep(660, 0, 0.16, 0.14);
+  }
+}
+
+// level 1 = 短震一次；level 2 = 三段急促震動。iOS Safari 不支援 vibrate API，靜默跳過。
+function playVibrate(level){
+  if(!localNotifyPrefs.vibrate) return;
+  if(!('vibrate' in navigator)) return;
+  try { navigator.vibrate(level>=2 ? [120,70,120,70,120] : [80]); } catch(e){}
+}
+
+// 統一入口：所有 showToast() 都會經過這裡
+function fireLocalNotify(level){
+  playNotifySound(level);
+  playVibrate(level);
+}
+
+function _updateLocalNotifyToggleUI(){
+  const st = document.getElementById('local-sound-toggle');
+  const sk = document.getElementById('local-sound-knob');
+  if(st){ st.style.background = localNotifyPrefs.sound ? 'var(--green)' : 'var(--hint)'; }
+  if(sk){ sk.style.left = localNotifyPrefs.sound ? '21px' : '3px'; }
+  const vt = document.getElementById('local-vibrate-toggle');
+  const vk = document.getElementById('local-vibrate-knob');
+  if(vt){ vt.style.background = localNotifyPrefs.vibrate ? 'var(--green)' : 'var(--hint)'; }
+  if(vk){ vk.style.left = localNotifyPrefs.vibrate ? '21px' : '3px'; }
+  // 裝置不支援震動（如 iOS Safari）時提示使用者，避免誤以為功能壞掉
+  const hint = document.getElementById('vibrate-support-hint');
+  if(hint && !('vibrate' in navigator)){
+    hint.textContent = '此裝置/瀏覽器不支援震動（iOS 限制）';
+    hint.style.color = 'var(--amber)';
+  }
+}
+
+function toggleLocalSound(){
+  localNotifyPrefs.sound = !localNotifyPrefs.sound;
+  _saveLocalNotifyPrefs();
+  _updateLocalNotifyToggleUI();
+  if(localNotifyPrefs.sound){
+    _getAudioCtx(); // 在這次點擊的使用者手勢內解鎖 AudioContext
+    playNotifySound(1); // 立即給聽覺回饋，確認開啟成功
+  }
+}
+function toggleLocalVibrate(){
+  localNotifyPrefs.vibrate = !localNotifyPrefs.vibrate;
+  _saveLocalNotifyPrefs();
+  _updateLocalNotifyToggleUI();
+  if(localNotifyPrefs.vibrate) playVibrate(1);
+}
+function testLocalNotify(level){
+  // 測試按鈕：即使開關還沒開也讓使用者聽看看效果（不影響已存設定）
+  const ctx = _getAudioCtx();
+  if(ctx){
+    const beep = (freq, start, dur, vol)=>{
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine'; osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0, ctx.currentTime+start);
+      gain.gain.linearRampToValueAtTime(vol, ctx.currentTime+start+0.012);
+      gain.gain.linearRampToValueAtTime(0, ctx.currentTime+start+dur);
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.start(ctx.currentTime+start); osc.stop(ctx.currentTime+start+dur+0.03);
+    };
+    if(level>=2){ beep(880,0,0.12,0.20); beep(880,0.16,0.12,0.20); }
+    else { beep(660,0,0.16,0.14); }
+  }
+  if('vibrate' in navigator){
+    try { navigator.vibrate(level>=2 ? [120,70,120,70,120] : [80]); } catch(e){}
+  }
+}
+
+/* ══════════════════════════════════════
    Telegram 推送系統
 ══════════════════════════════════════ */
 // 設定存在記憶體（file:// 不能用 localStorage，重開要重填）
@@ -6732,6 +6884,16 @@ let tgConfig = {
 const _tgPushed = new Set(); // 已推送過的，避免重複
 
 function openTgSettings(){
+  // 關鍵修復：手機版點擊「推送設定」時，選單(z-index:9000)還是展開狀態，
+  // 而彈窗原本的 z-index 比選單低，導致彈窗其實已經顯示了，卻被選單整個蓋住、
+  // 視覺上看起來「沒反應」，直到切到別頁讓選單自動收起才會「跳出來」。
+  // 這裡先比照 switchPage() 的邏輯，主動收起手機版下拉選單再開啟彈窗。
+  const sb = document.querySelector('.sidebar');
+  const bd = document.querySelector('.mobile-nav-backdrop');
+  if(sb && sb.classList.contains('mobile-open')){
+    sb.classList.remove('mobile-open');
+    if(bd) bd.classList.remove('show');
+  }
   // 還原已存設定到表單
   document.getElementById('tg-enabled').checked = tgConfig.enabled;
   document.getElementById('tg-token').value = tgConfig.token;
@@ -6739,6 +6901,7 @@ function openTgSettings(){
   document.getElementById('tg-cond-alert').checked = tgConfig.condAlert;
   document.getElementById('tg-cond-signal').checked = tgConfig.condSignal;
   updateTgToggle();
+  _updateLocalNotifyToggleUI();
   document.getElementById('tg-modal').classList.add('show');
 }
 function closeTgModal(){ document.getElementById('tg-modal').classList.remove('show'); }

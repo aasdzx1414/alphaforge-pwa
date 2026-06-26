@@ -3629,12 +3629,13 @@ function renderCoinRow(c, rank){
     lsCol = lsEntry.longRatio>0.55?'var(--green)':lsEntry.longRatio<0.45?'var(--red)':'var(--muted)';
   }
 
-  return `<div class="coin-row">
+  return `<div class="coin-row" data-sym="${c.sym}" data-side="${c.chg24h>=0?'long':'short'}"
+    onclick="openDetailModal(this.dataset.sym,this.dataset.side)" style="cursor:pointer">
     <div class="coin-rank">${rank}</div>
     <div class="coin-name-wrap">
       <div class="coin-icon" style="color:${iconColor};border-color:${iconColor}33">${initials}</div>
       <div>
-        <div class="coin-sym">${c.sym} <span class="tv-badge" onclick="openTradingView('${c.sym}',event)" title="TradingView">TV</span>${cgBadgeHtml(c.sym)}</div>
+        <div class="coin-sym">${c.sym} <span class="tv-badge" onclick="event.stopPropagation();openTradingView('${c.sym}',event)" title="TradingView">TV</span>${cgBadgeHtml(c.sym)}</div>
         <div class="coin-full" style="color:var(--purple);opacity:.7">SWAP 永續</div>
       </div>
     </div>

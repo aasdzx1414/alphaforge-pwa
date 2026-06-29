@@ -1561,6 +1561,9 @@ window.addEventListener('unhandledrejection', function(e){
             </div>
           </div>
 
+          <div id="calc-margin-warn" style="display:none;margin-top:10px;padding:9px 12px;border-radius:6px;
+            background:rgba(255,61,90,.08);border-left:3px solid var(--red);color:var(--text);font-size:11.5px"></div>
+
           <div style="font-size:10px;color:var(--hint);margin-top:12px;line-height:1.6;text-align:center">
             爆倉價估算未含手續費與維持保證金率，僅供參考<br>本工具為計算輔助，不構成投資建議
           </div>
@@ -1957,7 +1960,7 @@ async function fetch24h(){
     renderTopPrices(); // 先顯示頂部價格
 
     // 背景抓全部 ticker
-    const r = await fetch('https://api.binance.com/api/v3/ticker/24hr');
+    const r = await fetchTimeout('https://api.binance.com/api/v3/ticker/24hr');
     const all = await r.json();
     all.forEach(t=>{ ticker24h[t.symbol]=t; });
     renderTopPrices();
@@ -2295,7 +2298,7 @@ let _fngLast = 0, _fngVal = null;
 async function updateFearGreed(){
   if(_fngVal!=null && Date.now()-_fngLast < 300000) return; // 5分鐘節流
   try{
-    const r = await fetch('https://api.alternative.me/fng/?limit=1');
+    const r = await fetchTimeout('https://api.alternative.me/fng/?limit=1');
     const d = await r.json();
     if(!d.data || !d.data[0]) return;
     const v = parseInt(d.data[0].value);
@@ -2410,7 +2413,7 @@ async function updateAltSeason(){
 // 抓 OKX 日線
 async function fetchDaily(okxSym, limit=90){
   try{
-    const r = await fetch(`https://www.okx.com/api/v5/market/candles?instId=${okxSym}-USDT-SWAP&bar=1D&limit=${limit}`);
+    const r = await fetchTimeout(`https://www.okx.com/api/v5/market/candles?instId=${okxSym}-USDT-SWAP&bar=1D&limit=${limit}`);
     const d = await r.json();
     if(d.code!=='0' || !d.data) return null;
     return d.data
@@ -2723,6 +2726,14 @@ async function loadAlerts(){
       }
     }
   });
+  // 關鍵修復：偵測「上一輪有觸發、這次沒有」的 key，代表該幣種的警報已經
+  // 中斷。若不清除對應的 alertHistory 記錄，下次它重新觸發時會誤用舊的
+  // firstTs/firstPrice/periods，導致「持續多久」「警報後漲跌%」「連續觸發
+  // 次數」全部混入不相干的歷史資料（例如警報中斷3天後重新觸發，卻顯示
+  // 「3天前」而非「剛剛」)。
+  _prevAlertKeys.forEach(k=>{
+    if(!curKeys.has(k)) alertHistory.delete(k);
+  });
   _prevAlertKeys = curKeys;
   if(document.getElementById('alert-long-count'))
     document.getElementById('alert-long-count').textContent  = longAlerts.length;
@@ -2754,7 +2765,7 @@ let _lsCvdLast = 0;
 async function fetchBinanceLS(sym){
   try{
     const url = `https://fapi.binance.com/futures/data/topLongShortPositionRatio?symbol=${sym}USDT&period=15m&limit=1`;
-    const r = await fetch(url);
+    const r = await fetchTimeout(url);
     if(!r.ok) return null;
     const d = await r.json();
     if(!d.length) return null;
@@ -2771,7 +2782,7 @@ async function fetchBinanceLS(sym){
 async function fetchBinanceCVD(sym){
   try{
     const url = `https://fapi.binance.com/futures/data/takerlongshortRatio?symbol=${sym}USDT&period=5m&limit=12`; // 近 1 小時
-    const r = await fetch(url);
+    const r = await fetchTimeout(url);
     if(!r.ok) return null;
     const d = await r.json();
     if(!d.length) return null;
@@ -2830,7 +2841,7 @@ async function updateLsCvd(force){
 // 抓單一幣 OKX 資金費率
 async function fetchOkxFunding(sym){
   try{
-    const r = await fetch(`https://www.okx.com/api/v5/public/funding-rate?instId=${sym}-USDT-SWAP`);
+    const r = await fetchTimeout(`https://www.okx.com/api/v5/public/funding-rate?instId=${sym}-USDT-SWAP`);
     const d = await r.json();
     if(d.code==='0' && d.data?.[0]?.fundingRate) return parseFloat(d.data[0].fundingRate);
   }catch(e){}
@@ -2926,7 +2937,7 @@ async function loadOI(){
     // 用 OKX /public/open-interest 抓真實未平倉量（含 oiUsd），此 endpoint 有開 CORS
     let realOiCount = 0, oiChangeReal = 0;
     try {
-      const r = await fetch('https://www.okx.com/api/v5/public/open-interest?instType=SWAP');
+      const r = await fetchTimeout('https://www.okx.com/api/v5/public/open-interest?instType=SWAP');
       const d = await r.json();
       if(d.code === '0' && d.data){
         // 讀取上一次的 OI 快照（用於計算真實變化）
@@ -3183,6 +3194,9 @@ function switchPage(page, navEl){
 
   // 離開背離頁時中止進行中的掃描（省 API）
   if(page !== 'divergence' && _divScanning) _divScanning = false;
+  // 離開數據訊號頁時同樣中止進行中的掃描（原本只有 divergence 有這個邏輯，
+  // sycamore 漏掉了，使用者切走後背景仍會把整輪掃描跑完才停，浪費 API 額度）
+  if(page !== 'sycamore' && _sycScanning) _sycScanning = false;
 
   const dash = document.getElementById('page-dashboard');
   const coins = document.getElementById('page-coins');
@@ -3277,7 +3291,7 @@ async function loadOkxCoins(){
 
   try {
     // OKX 公開 API - 永續合約 ticker
-    const r = await fetch('https://www.okx.com/api/v5/market/tickers?instType=SWAP');
+    const r = await fetchTimeout('https://www.okx.com/api/v5/market/tickers?instType=SWAP');
     const data = await r.json();
 
     if(data.code !== '0') throw new Error(data.msg);
@@ -3340,7 +3354,7 @@ let okxSwapSet = new Set(); // 確認 OKX 有合約的幣種 sym (e.g. 'BTC','ET
 
 async function fetchOkxSwapList(){
   try {
-    const r = await fetch('https://www.okx.com/api/v5/market/tickers?instType=SWAP');
+    const r = await fetchTimeout('https://www.okx.com/api/v5/market/tickers?instType=SWAP');
     const d = await r.json();
     if(d.code !== '0' || !d.data) throw new Error('OKX API failed');
     okxSwapSet = new Set(
@@ -3599,6 +3613,36 @@ async function runSparkQueue(){
 }
 
 function chgCls(v){ return v>0?'coin-chg-pos':v<0?'coin-chg-neg':'coin-chg-neu'; }
+
+// 統一的 timeout fetch：原本許多核心 API 呼叫（OI/ticker/funding rate 等）
+// 完全沒有逾時保護，行動網路訊號不穩時，請求可能無限期 pending，
+// 導致對應頁面長時間停留在 loading 卻沒有任何錯誤提示（看起來像當機）。
+// 預設 12 秒逾時，超時會 abort 並讓呼叫端的 catch 走原本的錯誤處理路徑。
+async function fetchTimeout(url, options={}, ms=12000){
+  const ctrl = new AbortController();
+  const t = setTimeout(()=>ctrl.abort(), ms);
+  try {
+    return await fetch(url, {...options, signal: ctrl.signal});
+  } finally {
+    clearTimeout(t);
+  }
+}
+
+// HTML escape：所有來自外部 API/RSS 的自由文本（新聞標題、內容等）插入 innerHTML 前
+// 都必須經過這層，否則惡意/異常的來源內容（含 <script>、onerror= 等）可能被直接執行。
+function escapeHtml(str){
+  if(str == null) return '';
+  return String(str).replace(/[&<>"']/g, ch => ({
+    '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'
+  }[ch]));
+}
+// 驗證連結是否為安全的 http(s) 連結，避免 javascript: 等偽協定被注入執行
+function safeUrl(url){
+  if(!url) return '#';
+  const u = String(url).trim();
+  if(/^https?:\/\//i.test(u)) return u;
+  return '#';
+}
 function chgTxt(v){ return (v>=0?'+':'')+v.toFixed(2)+'%'; }
 
 function renderCoinRow(c, rank){
@@ -3748,15 +3792,15 @@ function useSuggestLev(){
 }
 
 function calcPosition(){
-  // 讀取輸入
-  const capital = parseFloat(document.getElementById('calc-capital').value) || 0;
+  // 讀取輸入 —— Math.max(0,...) 防止負數資金/風險%算出負的止損金額、保證金等無意義數字
+  const capital = Math.max(0, parseFloat(document.getElementById('calc-capital').value) || 0);
   // 同步風險 slider 與數字框
-  const riskSlider = parseFloat(document.getElementById('calc-risk').value) || 2;
+  const riskSlider = Math.max(0.1, parseFloat(document.getElementById('calc-risk').value) || 2);
   document.getElementById('calc-risk-num').value = riskSlider;
   const riskPct = riskSlider; // %
 
-  const entry = parseFloat(document.getElementById('calc-entry').value) || 0;
-  const stop  = parseFloat(document.getElementById('calc-stop').value) || 0;
+  const entry = Math.max(0, parseFloat(document.getElementById('calc-entry').value) || 0);
+  const stop  = Math.max(0, parseFloat(document.getElementById('calc-stop').value) || 0);
 
   // 止損% = |進場 - 止損| / 進場 × 100
   let stopPct = 0;
@@ -3768,7 +3812,11 @@ function calcPosition(){
   const lossAmount = capital * riskPct / 100;
 
   // ② 安全槓桿上限 = 50 ÷ 止損%
-  const suggestLev = stopPct > 0 ? Math.floor(50 / stopPct) : 0;
+  //    顯示用的數字另外做上限保護：止損距離設得極小（如使用者誤觸幾乎相同的進場/止損價）
+  //    時，公式算出的「建議」可能是數千倍，沒有任何交易所提供這種槓桿，
+  //    顯示這種數字只會誤導使用者、看起來像系統故障。
+  const suggestLevRaw = stopPct > 0 ? Math.floor(50 / stopPct) : 0;
+  const suggestLev = Math.min(125, suggestLevRaw); // 125x 已是主流交易所的上限
 
   // ③ 倉位總價值 = 止損金額 ÷ 止損%
   const positionValue = stopPct > 0 ? lossAmount / (stopPct/100) : 0;
@@ -3813,6 +3861,18 @@ function calcPosition(){
     warnEl.style.color = 'var(--muted)';
   } else {
     warnEl.textContent = '';
+  }
+
+  // 保證金合理性檢查：若算出的所需保證金已經超過總資金，代表在目前槓桿下
+  // 根本沒有足夠資金開出這個倉位，提醒使用者調高槓桿或降低風險%/縮小止損距離。
+  const marginWarnEl = document.getElementById('calc-margin-warn');
+  if(marginWarnEl){
+    if(capital > 0 && margin > capital){
+      marginWarnEl.textContent = `⚠ 所需保證金 ${margin.toFixed(2)} 已超過總資金 ${capital.toFixed(2)}，目前設定無法實際下單`;
+      marginWarnEl.style.display = 'block';
+    } else {
+      marginWarnEl.style.display = 'none';
+    }
   }
 
   // ── 持倉成本估算（真實費率）──
@@ -4054,15 +4114,29 @@ function updateDivLifecycle(d){
     const state = { status: prev?.status||'pending', pnlPct:0, ts:prev?.ts||Date.now(), sym:d.sym, type:d.type };
     states[key] = state; saveDivStates(states); return state;
   }
+
+  // ── 路徑依賴修復：用 24H high/low 輔助判斷「期間內」是否曾經觸及 tp/sl ──
+  // 原本只看「這次檢查瞬間」的單一價格，若價格曾插針觸發停損後反彈，
+  // 下次檢查時可能已經彈回止盈之上，被誤判為 win，導致統計出的勝率
+  // 系統性偏向樂觀。24H high/low 是目前資料來源下，不需要額外 API 呼叫
+  // 就能取得的最佳近似；當訊號存活時間 >= 24H 時，這個近似會失真
+  // （可能涵蓋到訊號產生前的價格波動），此時退回只用當前價判斷。
+  const ageHoursForExtreme = prev?.ts ? (Date.now()-prev.ts)/3600000 : 0;
+  const useExtremes = !!(t && ageHoursForExtreme < 24 && ageHoursForExtreme >= 0);
+  const periodHigh = useExtremes ? parseFloat(t.highPrice||curPrice) : curPrice;
+  const periodLow  = useExtremes ? parseFloat(t.lowPrice||curPrice)  : curPrice;
+
   if(d.type === 'long'){
     pnlPct = (curPrice - safeEntry) / safeEntry * 100;
-    if(curPrice >= tp) status = 'win';
-    else if(curPrice <= sl) status = 'loss';
+    // 優先檢查止損（保守原則）：若期間內最低價已觸及 sl，即使現在價格已反彈到 tp 之上，
+    // 真實交易中止損單早已被觸發出場，不應該因為事後反彈而判定為 win。
+    if(periodLow <= sl) status = 'loss';
+    else if(periodHigh >= tp) status = 'win';
     else if(pnlPct >= (safeEntry - sl) / safeEntry * 50) status = 'be';
   } else {
     pnlPct = (safeEntry - curPrice) / safeEntry * 100;
-    if(curPrice <= tp) status = 'win';
-    else if(curPrice >= sl) status = 'loss';
+    if(periodHigh >= sl) status = 'loss';
+    else if(periodLow <= tp) status = 'win';
     else if(pnlPct >= (sl - entry) / entry * 50) status = 'be';
   }
   if(status === 'be' && (!prev || prev.status === 'pending')) status = 'open';
@@ -4312,7 +4386,7 @@ function detectDivergence(candles){
 // 抓 OKX K 線（預設 1H，100 根；可指定 bar 如 '4H'）
 async function fetchCandles(okxSym, bar='1H'){
   try{
-    const r = await fetch(`https://www.okx.com/api/v5/market/candles?instId=${okxSym}-USDT-SWAP&bar=${bar}&limit=100`);
+    const r = await fetchTimeout(`https://www.okx.com/api/v5/market/candles?instId=${okxSym}-USDT-SWAP&bar=${bar}&limit=100`);
     const d = await r.json();
     if(d.code!=='0' || !d.data) return null;
     // OKX 回傳由新到舊，反轉成舊到新；過濾未收盤的最新一根
@@ -4746,16 +4820,22 @@ function updateSycLifecycle(sig){
   }
 
   // 已進場 — 用鎖定的 entry/SL/TP 追蹤
+  // 同背離訊號的修復：用 24H high/low 輔助判斷「期間內」是否觸及，
+  // 並優先檢查止損（保守原則），避免插針反彈被誤判為 win。
   let status = 'open', pnl = 0;
+  const ageHoursForExtreme = (Date.now()-ts) / 3600000;
+  const useExtremes = !!(t && ageHoursForExtreme < 24 && ageHoursForExtreme >= 0);
+  const periodHigh = useExtremes ? parseFloat(t.highPrice||cur) : cur;
+  const periodLow  = useExtremes ? parseFloat(t.lowPrice||cur)  : cur;
   if(dir==='long'){
     pnl = (cur - entry)/entry*100;
-    if(cur >= tp) status = 'win';
-    else if(cur <= sl) status = 'loss';
+    if(periodLow <= sl) status = 'loss';
+    else if(periodHigh >= tp) status = 'win';
     else if(pnl >= Math.abs(entry-sl)/entry*50) status = 'be';
   } else {
     pnl = (entry - cur)/entry*100;
-    if(cur <= tp) status = 'win';
-    else if(cur >= sl) status = 'loss';
+    if(periodHigh >= sl) status = 'loss';
+    else if(periodLow <= tp) status = 'win';
     else if(pnl >= Math.abs(sl-entry)/entry*50) status = 'be';
   }
   if(status==='be' && (!prev || prev.status==='pending')) status = 'open';
@@ -4784,7 +4864,7 @@ async function detectCvdAbsorption(sym){
   try{
     // 抓 48 根 5min（4 小時），建立 CVD 累積序列
     const url = `https://fapi.binance.com/futures/data/takerlongshortRatio?symbol=${sym}USDT&period=5m&limit=48`;
-    const r = await fetch(url);
+    const r = await fetchTimeout(url);
     if(!r.ok) return null;
     const d = await r.json();
     if(!d || d.length < 24) return null;
@@ -4894,6 +4974,7 @@ async function loadSycamore(force=false){
   const signals = [];
 
   for(let i=0;i<cands.length;i+=5){
+    if(!_sycScanning) break; // 若使用者離開頁面則中止（省 API）
     const batch = cands.slice(i,i+5);
     await Promise.allSettled(batch.map(async t=>{
       const sym = symLabel(t.symbol);
@@ -5580,9 +5661,15 @@ function cgBadgeHtml(coin){
 }
 
 let dmCurrentSym = '', dmCurrentSide = 'long';
+let _dmRequestSeq = 0; // 請求序號：用來辨識「這次 fetch 回應時，使用者是否已經切去看別的幣種」
 
 async function openDetailModal(sym, side){
   if(!sym) return;
+  // 關鍵修復：記錄這次呼叫專屬的序號。fetch 資金費率需要等待網路回應，
+  // 若使用者在等待期間又點開了另一個幣種，舊請求遲到的回應不應該再
+  // 覆寫畫面上「資金費率/OI/綜合評分」等欄位 —— 否則會出現幣種名稱
+  // 顯示 A、但評分內容其實是 B 的延遲回應這種錯亂畫面。
+  const mySeq = ++_dmRequestSeq;
   try {
   dmCurrentSym = sym;
   dmCurrentSide = side;
@@ -5626,17 +5713,24 @@ async function openDetailModal(sym, side){
   let oi = vol24h * 0.4;
   let mcap = vol24h * 5;        // 市值粗估（無免費真實來源）
   let longRatio = 0.5;
+  let frIsReal = false;
 
   // 嘗試抓 OKX 公開資金費率（此 endpoint 有 CORS）
   try {
-    const frRes = await fetch(`https://www.okx.com/api/v5/public/funding-rate?instId=${sym}-USDT-SWAP`);
+    const frRes = await fetchTimeout(`https://www.okx.com/api/v5/public/funding-rate?instId=${sym}-USDT-SWAP`);
     const frData = await frRes.json();
     if(frData.data?.[0]?.fundingRate){
       fr = parseFloat(frData.data[0].fundingRate);
+      frIsReal = true;
     }
   } catch(e){
     fr = chg24h * 0.001; // CORS 失敗時用 chg24h 代理費率
+    frIsReal = false;
   }
+
+  // 競態防護：fetch 等待期間，使用者若已點開別的幣種，_dmRequestSeq 會被新呼叫遞增，
+  // 這裡發現序號不匹配就直接放棄，不繼續寫入畫面（避免名稱顯示新幣種、但下面內容是舊幣種的錯亂)
+  if(mySeq !== _dmRequestSeq) return;
 
   document.getElementById('dm-fr').textContent = (fr>=0?'+':'')+( fr*100).toFixed(4)+'%';
   document.getElementById('dm-fr').style.color = fr>=0?'var(--red)':'var(--green)'; // high FR = bearish for longs
@@ -5650,7 +5744,7 @@ async function openDetailModal(sym, side){
   // ── Scoring system ──
   const scores = computeScores(sym, chg24h, _m.priceChg1h, fr, longRatio, vol24h, oi, side,
     { oiChg1h:_m.oiChg1h, oiChgReal:_m.oiChgReal, cvdDeltaPct:_m.cvdDeltaPct, cvdTrend:_m.cvdTrend, cvdReal:_m.cvdReal, lsReal:_m.lsReal });
-  renderDetailScores(scores, sym, price, chg24h, _m.priceChg1h, fr, longRatio, oi, side);
+  renderDetailScores(scores, sym, price, chg24h, _m.priceChg1h, fr, longRatio, oi, side, frIsReal);
   } catch(e){ console.warn('openDetailModal error:', e); }
 }
 
@@ -5945,7 +6039,7 @@ function computeScores(sym, chg24h, chg1h, fr, longRatio, vol24h, oi, side, opts
   return { items, totalPts, maxPts, score10, regimeFactor, synergyTag, counterTrendPenalty: (regimeFactor > 0.45 && counterTrend) };
 }
 
-function renderDetailScores(scores, sym, price, chg24h, chg1h, fr, longRatio, oi, side){
+function renderDetailScores(scores, sym, price, chg24h, chg1h, fr, longRatio, oi, side, frIsReal){
   const isLong = side === 'long';
   const { items, totalPts, maxPts, score10 } = scores;
 
@@ -6014,7 +6108,7 @@ function renderDetailScores(scores, sym, price, chg24h, chg1h, fr, longRatio, oi
   else if(fr > -0.005){ frTag = tag('負費率','bull'); frText = `費率 ${frFmt}，空方付費給多方，對做多有利`; }
   else { frTag = tag('極端負費率','bull'); frText = `費率 ${frFmt}，空方大幅付費，潛在軋空動能強`; }
   document.getElementById('dv-fr').innerHTML =
-    frTag + ` <span style="font-size:8px;color:var(--green);opacity:.8">●真實</span> <span style="font-size:10px;color:var(--muted)"> ${frText}</span>`;
+    frTag + ` ${realMark(frIsReal)} <span style="font-size:10px;color:var(--muted)"> ${frText}</span>`;
 
   // 帳戶情緒（真實大戶多空比）
   const lsPct = (longRatio*100).toFixed(1);
@@ -6381,7 +6475,7 @@ async function loadNews(force=false){
 // CoinGecko Trending 熱度幣種
 async function fetchTrending(){
   try{
-    const r = await fetch('https://api.coingecko.com/api/v3/search/trending');
+    const r = await fetchTimeout('https://api.coingecko.com/api/v3/search/trending');
     const d = await r.json();
     const coins = (d.coins||[]).slice(0, 8);
     const bar = document.getElementById('news-trending');
@@ -6529,37 +6623,39 @@ function renderNewsFeed(items){
     const catTagMap = {btc:'Bitcoin',eth:'Ethereum',defi:'DeFi',macro:'總經',altcoin:'山寨幣',listing:'上所'};
     const catTag = catTagMap[n.category]||n.category;
 
-    // 顯示中文（若已翻譯）或原文
-    const displayTitle = n.titleZh || n.title;
-    const displayBody  = n.bodyZh  || n.body;
+    // 顯示中文（若已翻譯）或原文 —— escapeHtml 防止外部新聞源內容夾帶 HTML/腳本
+    const displayTitle = escapeHtml(n.titleZh || n.title);
+    const displayBody  = escapeHtml(n.bodyZh  || n.body);
+    const origTitleEsc = escapeHtml(n.title);
     const isTranslated = !!n.titleZh;
     const transTag = isTranslated
       ? `<span style="font-size:9px;padding:1px 5px;border-radius:3px;background:rgba(0,200,150,.1);color:var(--green);border:1px solid rgba(0,200,150,.2)">中文</span>`
       : `<span style="font-size:9px;padding:1px 5px;border-radius:3px;background:var(--hint);color:var(--muted)">翻譯中…</span>`;
 
     const coinTags = extractCoinTags(n.title);
-    const link = (n.link||'#').replace(/'/g,'%27');
+    // safeUrl：只允許 http(s) 開頭的連結，阻擋 javascript: 等偽協定注入
+    const link = safeUrl(n.link).replace(/'/g,'%27');
     const senti = analyzeNewsSentiment(n);
     const sentiBadge = senti.score !== 0
       ? `<span style="font-size:9px;padding:1px 6px;border-radius:3px;background:${senti.badge.bg};color:${senti.badge.c};font-weight:700"
-          title="${senti.hits.join('、')}">${senti.badge.t}${senti.hits.length?' '+senti.hits[0]:''}</span>`
+          title="${escapeHtml(senti.hits.join('、'))}">${senti.badge.t}${senti.hits.length?' '+escapeHtml(senti.hits[0]):''}</span>`
       : '';
 
     return `<div class="news-card ${featured}" onclick="window.open('${link}','_blank','noopener')">
       <div class="news-card-header">
         ${n.category==='listing'?'<span class="news-badge-listing">📋 上所</span>':''}
         ${sentiBadge}
-        <span class="news-source" style="${srcStyle}">${n.source.name}</span>
+        <span class="news-source" style="${srcStyle}">${escapeHtml(n.source.name)}</span>
         <span class="news-time">${n.date ? timeAgo(n.date) : '—'}</span>
         <span class="news-impact ${impactCls}">${impact==='high'?'🔴 重大':impact==='med'?'🟡 關注':'⚪ 一般'}</span>
         ${transTag}
       </div>
       <div class="news-title">${displayTitle}</div>
-      ${isTranslated && n.title !== displayTitle ? `<div style="font-size:10px;color:var(--hint);margin-bottom:4px;font-style:italic">${n.title}</div>` : ''}
+      ${isTranslated && n.title !== (n.titleZh||n.title) ? `<div style="font-size:10px;color:var(--hint);margin-bottom:4px;font-style:italic">${origTitleEsc}</div>` : ''}
       ${displayBody ? `<div class="news-body">${displayBody}</div>` : ''}
       <div class="news-tags-row">
-        <span class="news-tag">#${catTag}</span>
-        ${coinTags.map(t=>`<span class="news-tag" data-sym="${t}" data-side="long" onclick="event.stopPropagation();openDetailModal(this.dataset.sym,this.dataset.side)">#${t}</span>`).join('')}
+        <span class="news-tag">#${escapeHtml(catTag)}</span>
+        ${coinTags.map(t=>`<span class="news-tag" data-sym="${escapeHtml(t)}" data-side="long" onclick="event.stopPropagation();openDetailModal(this.dataset.sym,this.dataset.side)">#${escapeHtml(t)}</span>`).join('')}
       </div>
     </div>`;
   }).join('');
@@ -6965,7 +7061,7 @@ async function sendTgMessage(text){
   if(!tgConfig.token || !tgConfig.chatId) return {ok:false, err:'未填 Token/ChatID'};
   try {
     const url = `https://api.telegram.org/bot${tgConfig.token}/sendMessage`;
-    const r = await fetch(url, {
+    const r = await fetchTimeout(url, {
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body: JSON.stringify({
@@ -7005,7 +7101,7 @@ async function autoDetectChatId(){
   }
   st.textContent = '偵測中…請確認已對 Bot 傳過訊息'; st.style.color = 'var(--muted)';
   try {
-    const r = await fetch(`https://api.telegram.org/bot${token}/getUpdates`);
+    const r = await fetchTimeout(`https://api.telegram.org/bot${token}/getUpdates`);
     const d = await r.json();
     if(!d.ok){
       // 409 = Bot 已綁定 Webhook，getUpdates 無法用（Gemini 審查四）
@@ -7230,6 +7326,17 @@ function buildTgCard(s){
 /* 限制 _tgPushed 大小，避免無限增長 */
 setInterval(()=>{ if(_tgPushed.size > 200) _tgPushed.clear(); }, 600000);
 
+/* 同樣限制 translationCache/sparkCache/_oiRegimes 大小，避免長時間掛著
+   持續累積記憶體（這三者原本完全沒有清理機制，雖然各自有隱含的自然上限
+   ——幣種數量或新聞數量，但長期執行下仍會緩慢累積殭屍資料）。
+   採用跟 _tgPushed 一致的「超過上限就整體清空重建」策略：簡單可靠，
+   下次使用時會自然重新填入，不影響功能正確性，只是極短暫的快取未命中。*/
+setInterval(()=>{
+  if(translationCache.size > 500) translationCache.clear();
+  if(Object.keys(sparkCache).length > 500) for(const k in sparkCache) delete sparkCache[k];
+  if(Object.keys(_oiRegimes).length > 500) for(const k in _oiRegimes) delete _oiRegimes[k];
+}, 600000);
+
 /* ══ OKX 快捷下單彈窗 ══ */
 let okxCurrentSym='', okxCurrentSide='long';
 
@@ -7344,6 +7451,10 @@ function connectAllTickerWS(){
   };
 
   wsAllTicker.onmessage = e => {
+    // try-catch 保護：若收到的訊息不是合法 JSON（網路異常/資料截斷等極端情況），
+    // JSON.parse 會丟出例外。原本沒有包裹，會變成 uncaught exception，
+    // 雖不會讓整頁當機，但這次的行情更新會直接中斷、且可能在 console 持續洗版。
+    try {
     const arr = JSON.parse(e.data);
     if(!Array.isArray(arr)) return;
 
@@ -7390,6 +7501,7 @@ function connectAllTickerWS(){
       updateAllLivePrices();
       if(_carouselIdx===2) updateMarketBreadth(); // 當前在整體市場面板時即時刷新
     }
+    } catch(err){ console.error('wsAllTicker onmessage 處理失敗:', err); }
   };
 
   wsAllTicker.onerror = () => {};
@@ -7409,10 +7521,12 @@ function connectPriceWS(){
   ws = new WebSocket('wss://stream.binance.com:9443/ws/btcusdt@ticker/ethusdt@ticker/solusdt@ticker');
   ws.onopen = () => { wsRetryCount = 0; };
   ws.onmessage = e => {
+    try {
     const d = JSON.parse(e.data);
     if(!d.s) return;
     ticker24h[d.s] = {...ticker24h[d.s]||{}, lastPrice:d.c, priceChangePercent:d.P, highPrice:d.h, lowPrice:d.l, quoteVolume:d.q};
     renderTopPrices();
+    } catch(err){ console.error('connectPriceWS onmessage 處理失敗:', err); }
   };
   ws.onerror = () => {};
   ws.onclose = () => {
@@ -7502,20 +7616,45 @@ async function runDiag(){
 })();
 
 // 頁面可見性：隱藏時暫停資料更新
+// 找出目前顯示中的頁面 key（用於 visibilitychange 恢復時，重新觸發該頁面專屬的輪詢建立邏輯）
+function getCurrentPageName(){
+  const pageIds = ['dashboard','coins','news','calc','sectors','divergence','oi','sycamore','learn'];
+  for(const p of pageIds){
+    const el = document.getElementById('page-'+p);
+    if(el && el.style.display !== 'none') return p;
+  }
+  return null;
+}
+
 document.addEventListener('visibilitychange', ()=>{
   if(document.hidden){
-    // 暫停所有 interval
-    Object.values(INTERVALS).forEach(id => { if(id) clearInterval(id); });
+    // 暫停所有 interval —— 關鍵修復：clearInterval 只是停止計時器觸發，
+    // 但 INTERVALS[k] 這個屬性值本身（舊的 interval ID 數字）依然留著、是 truthy。
+    // 若不順手設回 null，之後任何「if(!INTERVALS.xxx) 才重建」的判斷永遠為 false，
+    // 等於整個輪詢機制在使用者第二次切換背景/前景後就靜默永久停止，
+    // 必須重新整理整頁才能恢復 —— 這是本次修復的核心。
+    Object.keys(INTERVALS).forEach(k => {
+      if(INTERVALS[k]){ clearInterval(INTERVALS[k]); INTERVALS[k] = null; }
+    });
   } else {
     // 回到頁面時立即刷新（重新建立 intervals）
     fetch24h().then(()=>{ renderSignals(); renderRSI(); });
     if(!okxSwapListLoaded) fetchOkxSwapList();
-    // 重啟 intervals
+    // 重啟全站市場輪詢
     if(!INTERVALS.market) {
       INTERVALS.market = setInterval(async()=>{
         await fetch24h(); renderRSI();
         if(document.getElementById('page-dashboard').style.display!=='none') await loadOI();
       }, 30000);
+    }
+    // 其餘 8 個頁面專屬輪詢（oiPage/coins/news/sectors/sycamore/divergence/divRT/sycRT）
+    // 的建立邏輯都寫在 switchPage() 內，只有「主動切換頁面」才會跑到；
+    // 單純切背景/前景並不會觸發 switchPage，所以這裡要主動補一次，
+    // 让目前正在看的頁面重新確保自己的輪詢已經建立。
+    const curPage = getCurrentPageName();
+    if(curPage){
+      const navEl = document.getElementById('nav-'+curPage);
+      if(navEl) switchPage(curPage, navEl);
     }
   }
 });

@@ -497,6 +497,34 @@ html{overflow-x:hidden;width:100%}
      可見cell，會在右側留下2個空軌道的空白)。*/
 }
 
+/* ── 視覺篩選器 ── */
+.vf-quad-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:8px;margin-bottom:12px}
+.vf-quad-card{border-radius:8px;padding:8px 10px;border:1px solid}
+.vf-quad-title{font-size:12px;font-weight:800}
+.vf-quad-sub{font-size:10px;color:var(--muted);margin-top:3px}
+.vf-chart-card{position:relative;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:10px;margin-bottom:12px}
+#vfCanvas{width:100%;display:block;border-radius:8px;cursor:grab;touch-action:none}
+#vfCanvas.vf-locked{cursor:default}
+.vf-lock-btn{position:absolute;top:16px;right:16px;z-index:5;font-size:10px;padding:4px 12px;
+  border:1px solid var(--border2);background:var(--bg3);color:var(--muted);border-radius:12px;cursor:pointer;transition:all .15s}
+.vf-lock-btn.is-locked{background:var(--amber-dim);border-color:var(--amber);color:var(--amber)}
+.vf-mode-btn{font-size:11px;padding:5px 12px;border-radius:6px;border:1px solid var(--border2);background:var(--bg3);color:var(--muted);cursor:pointer;transition:all .15s}
+.vf-mode-btn.active{background:var(--amber-dim);border-color:var(--amber);color:var(--amber)}
+.vf-tooltip{position:absolute;display:none;z-index:10;background:var(--bg4);border:1px solid var(--border2);
+  border-radius:8px;padding:9px 11px;font-size:11px;box-shadow:0 8px 24px rgba(0,0,0,.5);pointer-events:auto;min-width:170px}
+.vf-tooltip.is-pinned{border-color:var(--amber)}
+.vf-controls{display:flex;gap:16px;flex-wrap:wrap;padding:10px 6px 2px}
+.vf-control{display:flex;align-items:center;gap:8px;flex:1;min-width:200px}
+.vf-control-label{font-size:11px;color:var(--muted);white-space:nowrap}
+.vf-control input[type=range]{flex:1;accent-color:var(--amber)}
+.vf-control-val{font-family:var(--mono);font-size:12px;font-weight:700;min-width:44px;text-align:right}
+.vf-result-card{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:9px 11px;cursor:pointer;transition:background .15s}
+.vf-result-card:hover{background:var(--bg4)}
+@media(max-width:600px){
+  .vf-quad-grid{grid-template-columns:repeat(2,1fr)}
+  .vf-control{min-width:100%}
+}
+
 /* ── 學習資源 ── */
 .learn-section{background:var(--bg2);border:1px solid var(--border);border-radius:8px;margin-bottom:10px;overflow:hidden}
 .learn-header{display:flex;align-items:center;gap:10px;padding:14px 16px;cursor:pointer;transition:background .15s;user-select:none}
@@ -1092,6 +1120,7 @@ window.addEventListener('unhandledrejection', function(e){
     <div class="nav-item" id="nav-coins" onclick="switchPage('coins',this)"><span class="nav-icon">≡</span>幣種一覽</div>
     <div class="nav-item" id="nav-oi" onclick="switchPage('oi',this)"><span class="nav-icon">📊</span>OI 儀表板</div>
     <div class="nav-item" id="nav-sectors" onclick="switchPage('sectors',this)"><span class="nav-icon">◈</span>幣種版塊</div>
+    <div class="nav-item" id="nav-visual" onclick="switchPage('visual',this)"><span class="nav-icon">🎯</span>視覺篩選器</div>
 
     <div class="nav-section">訊號專區</div>
     <div class="nav-item nav-sub" id="nav-divergence" onclick="switchPage('divergence',this)"><span class="nav-icon">⚡</span>背離訊號</div>
@@ -1847,6 +1876,77 @@ window.addEventListener('unhandledrejection', function(e){
       <div id="sectors-body" style="margin-top:12px"></div>
     </div>
   </div><!-- /page-sectors -->
+
+  <!-- 視覺篩選器 -->
+  <div id="page-visual" style="display:none;flex:1;overflow-y:auto;background:var(--bg);flex-direction:column;padding:20px">
+    <div style="max-width:1100px;margin:0 auto;width:100%">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:10px">
+        <div>
+          <span style="font-family:var(--mono);font-size:16px;font-weight:700;color:var(--text)">🎯 視覺篩選器</span>
+          <span style="font-size:11px;color:var(--muted);margin-left:10px">1H 持倉變化 × 1H 價格變化 — 找出資金先動、行情還沒啟動的幣</span>
+        </div>
+        <button onclick="refreshVisualFilter(this)" id="vf-refresh-btn" class="refresh-btn" style="padding:6px 14px">↻ 刷新</button>
+      </div>
+
+      <!-- 判讀說明（可收合） -->
+      <div style="background:var(--bg2);border:1px solid var(--border);border-left:3px solid var(--amber);border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:11.5px;color:var(--muted);line-height:1.7">
+        <b style="color:var(--amber)">判讀原理：</b>X 軸 = 持倉(OI)變化（資金進出）、Y 軸 = 價格變化（行情是否跟上）。
+        <b style="color:var(--amber)">金色框「主力建倉區」</b>= OI 大增但價格橫盤 — 資金悄悄佈局、行情可能還沒發動；
+        <b style="color:#818cf8">藍紫框「主力平倉區」</b>= OI 大減但價格橫盤 — 倉位悄悄撤離、動能可能衰竭或趨勢將轉折。
+        上方按鈕可切換只看建倉/平倉。滾輪/雙指縮放，拖曳平移，點標籤看詳情。
+      </div>
+
+      <!-- 四象限說明卡 -->
+      <div class="vf-quad-grid">
+        <div class="vf-quad-card" style="background:rgba(99,102,241,.06);border-color:rgba(99,102,241,.18)">
+          <div class="vf-quad-title" style="color:#818cf8">Q2 空頭平倉 ↖</div>
+          <div class="vf-quad-sub">OI↓ + Price↑ · 軋空回補推漲</div>
+        </div>
+        <div class="vf-quad-card" style="background:rgba(0,200,150,.06);border-color:rgba(0,200,150,.18)">
+          <div class="vf-quad-title" style="color:var(--green)">Q1 多頭建倉 ↗</div>
+          <div class="vf-quad-sub">OI↑ + Price↑ · 新資金做多</div>
+        </div>
+        <div class="vf-quad-card" style="background:rgba(255,61,90,.06);border-color:rgba(255,61,90,.18)">
+          <div class="vf-quad-title" style="color:var(--red)">Q3 多頭平倉 ↙</div>
+          <div class="vf-quad-sub">OI↓ + Price↓ · 多頭離場</div>
+        </div>
+        <div class="vf-quad-card" style="background:rgba(249,115,22,.06);border-color:rgba(249,115,22,.18)">
+          <div class="vf-quad-title" style="color:#f97316">Q4 空頭建倉 ↘</div>
+          <div class="vf-quad-sub">OI↑ + Price↓ · 新資金做空/或吸籌</div>
+        </div>
+      </div>
+
+      <!-- 散點圖 -->
+      <div class="vf-chart-card">
+        <button class="vf-lock-btn" id="vfLockBtn" type="button" onclick="toggleVfLock()" aria-pressed="false">鎖定</button>
+        <!-- 模式切換：全部 / 只看建倉(OI↑) / 只看平倉(OI↓) -->
+        <div style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap">
+          <button class="vf-mode-btn active" data-mode="all" onclick="setVfMode('all',this)">全部</button>
+          <button class="vf-mode-btn" data-mode="open" onclick="setVfMode('open',this)">建倉 OI↑（Q1/Q4）</button>
+          <button class="vf-mode-btn" data-mode="close" onclick="setVfMode('close',this)">平倉 OI↓（Q2/Q3）</button>
+        </div>
+        <canvas id="vfCanvas"></canvas>
+        <div class="vf-controls">
+          <div class="vf-control">
+            <span class="vf-control-label">|OI| 門檻 ≥</span>
+            <input type="range" id="vfOiThresh" min="1" max="10" step="0.5" value="3"
+              oninput="document.getElementById('vfOiVal').textContent=parseFloat(this.value).toFixed(1);renderVisualFilter()">
+            <span class="vf-control-val" style="color:#a78bfa"><span id="vfOiVal">3.0</span>%</span>
+          </div>
+          <div class="vf-control">
+            <span class="vf-control-label">價格上限 ≤</span>
+            <input type="range" id="vfPxThresh" min="1" max="10" step="0.5" value="3"
+              oninput="document.getElementById('vfPxVal').textContent=parseFloat(this.value).toFixed(1);renderVisualFilter()">
+            <span class="vf-control-val" style="color:var(--green)"><span id="vfPxVal">3.0</span>%</span>
+          </div>
+        </div>
+        <div id="vfTooltip" class="vf-tooltip"></div>
+      </div>
+
+      <!-- 篩選結果列表 -->
+      <div id="vfResults"><div style="color:var(--muted);font-size:12px;padding:14px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;text-align:center">等待行情資料…（進入頁面後會自動載入 OI 數據）</div></div>
+    </div>
+  </div><!-- /page-visual -->
 
   <!-- 背離訊號 -->
   <div id="page-divergence" style="display:none;flex:1;overflow-y:auto;background:var(--bg);flex-direction:column;padding:20px">
@@ -3207,8 +3307,9 @@ function switchPage(page, navEl){
   const oiPage = document.getElementById('page-oi');
   const sycPage = document.getElementById('page-sycamore');
   const learnPage = document.getElementById('page-learn');
+  const visualPage = document.getElementById('page-visual');
   // 全部隱藏
-  [dash, coins, newsPage, calcPage, sectorsPage, divPage, oiPage, sycPage, learnPage].forEach(el => {
+  [dash, coins, newsPage, calcPage, sectorsPage, divPage, oiPage, sycPage, learnPage, visualPage].forEach(el => {
     if(el){ el.style.display = 'none'; el.style.flex = ''; }
   });
 
@@ -3278,9 +3379,23 @@ function switchPage(page, navEl){
     }, 180000);
   } else if(page === 'learn'){
     if(learnPage){ learnPage.style.display = 'flex'; learnPage.style.flexDirection = 'column'; learnPage.style.flex = '1'; }
+  } else if(page === 'visual'){
+    if(visualPage){ visualPage.style.display = 'flex'; visualPage.style.flexDirection = 'column'; visualPage.style.flex = '1'; }
+    // 進入頁面：確保 OI 資料已載入（loadOI 內部有節流，重複呼叫成本低），然後渲染散點圖
+    if(typeof loadOI==='function'){
+      loadOI().then(()=>renderVisualFilter()).catch(()=>renderVisualFilter());
+    } else {
+      renderVisualFilter();
+    }
+    // 每 60 秒自動刷新資料 + 重繪（只在停留於本頁時執行）
+    if(!INTERVALS.visual) INTERVALS.visual = setInterval(()=>{
+      if(document.getElementById('page-visual').style.display!=='none' && wsInitDone){
+        loadOI().then(()=>renderVisualFilter()).catch(()=>{});
+      }
+    }, 60000);
   }
   // 更新頁籤標題
-  const titles = {dashboard:'市場儀表板', coins:'幣種一覽', news:'即時新聞', calc:'倉位計算機', sectors:'幣種版塊', divergence:'背離訊號', sycamore:'數據訊號', learn:'學習資源'};
+  const titles = {dashboard:'市場儀表板', coins:'幣種一覽', news:'即時新聞', calc:'倉位計算機', sectors:'幣種版塊', divergence:'背離訊號', sycamore:'數據訊號', learn:'學習資源', visual:'視覺篩選器'};
   document.title = (titles[page]||page) + ' · AlphaForge PRO';
 }
 
@@ -4028,6 +4143,474 @@ function toggleSector(name){
   if(_expandedSectors.has(name)) _expandedSectors.delete(name);
   else _expandedSectors.add(name);
   renderSectors();
+}
+
+/* ══════════════════════════════════════
+   視覺篩選器：OI 1H 變化 × 價格 1H 變化 四象限散點圖
+   資料來源：完全使用既有管線 —— oiData（loadOI 填充，含真實 OI 快照相減的
+   1H 變化）+ getCoinMetrics()（統一輸出 oiChg1h / priceChg1h 及真實性標記）。
+   純前端 Canvas 手繪，不依賴任何圖表函式庫或後端。
+══════════════════════════════════════ */
+let _vfZoom = 1, _vfPanX = 0, _vfPanY = 0;
+let _vfDrag = null, _vfPinch = null;
+let _vfView = { RX:15, RY:10, pw:1, ph:1 };
+let _vfHoverPoints = [];
+let _vfLocked = false, _vfTipPinned = false;
+let _vfRefreshAt = 0, _vfRefreshing = false;
+let _vfMode = 'all'; // all=全部 | open=只看建倉(OI↑) | close=只看平倉(OI↓)
+const VF_REFRESH_COOLDOWN = 60000;
+
+function setVfMode(mode, btn){
+  _vfMode = mode;
+  document.querySelectorAll('.vf-mode-btn').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  renderVisualFilter();
+}
+
+async function refreshVisualFilter(btn){
+  const now = Date.now();
+  if(_vfRefreshing) return;
+  const waitMs = VF_REFRESH_COOLDOWN - (now - _vfRefreshAt);
+  if(waitMs > 0){
+    if(btn){
+      btn.textContent = '請稍候 ' + Math.ceil(waitMs/1000) + 's';
+      setTimeout(()=>{ btn.textContent = '↻ 刷新'; }, 900);
+    }
+    return;
+  }
+  _vfRefreshAt = now;
+  _vfRefreshing = true;
+  if(btn){ btn.textContent = '刷新中…'; btn.disabled = true; }
+  try {
+    if(typeof loadOI === 'function') await loadOI();
+    renderVisualFilter();
+  } catch(e){} finally {
+    _vfRefreshing = false;
+    if(btn){ btn.textContent = '↻ 刷新'; btn.disabled = false; }
+  }
+}
+
+function _vfRoundRect(ctx,x,y,w,h,r){
+  const rr = Math.min(r, w/2, h/2);
+  ctx.beginPath();
+  ctx.moveTo(x+rr,y);
+  ctx.arcTo(x+w,y,x+w,y+h,rr);
+  ctx.arcTo(x+w,y+h,x,y+h,rr);
+  ctx.arcTo(x,y+h,x,y,rr);
+  ctx.arcTo(x,y,x+w,y,rr);
+  ctx.closePath();
+}
+
+function _vfHideTip(){
+  const tip = document.getElementById('vfTooltip');
+  _vfTipPinned = false;
+  if(tip){ tip.style.display = 'none'; tip.classList.remove('is-pinned'); }
+}
+
+function toggleVfLock(){
+  _vfLocked = !_vfLocked;
+  const canvas = document.getElementById('vfCanvas');
+  const btn = document.getElementById('vfLockBtn');
+  if(canvas){
+    canvas.classList.toggle('vf-locked', _vfLocked);
+    // 手機關鍵：canvas 平常設 touch-action:none 以支援拖曳/pinch，但這會吃掉
+    // 頁面捲動手勢——使用者滑到圖表區會「卡住捲不動」。鎖定後改回 pan-y
+    // 恢復頁面捲動，這是行動裝置上不可省略的體驗細節。
+    canvas.style.touchAction = _vfLocked ? 'pan-y' : 'none';
+  }
+  if(btn){
+    btn.classList.toggle('is-locked', _vfLocked);
+    btn.setAttribute('aria-pressed', _vfLocked ? 'true' : 'false');
+    btn.textContent = _vfLocked ? '解鎖' : '鎖定';
+  }
+  _vfDrag = null; _vfPinch = null;
+  _vfHideTip();
+}
+
+function _vfClampPan(){
+  _vfPanX = Math.max(-60, Math.min(60, _vfPanX));
+  _vfPanY = Math.max(-40, Math.min(40, _vfPanY));
+}
+
+function _vfShowTip(canvas, clientX, clientY, hitRadius, pin=false){
+  const tip = document.getElementById('vfTooltip');
+  if(!tip) return false;
+  const r = canvas.getBoundingClientRect();
+  const x = clientX - r.left, y = clientY - r.top;
+  let hit = null, dist = 999;
+  for(const p of _vfHoverPoints){
+    const d = Math.hypot(p.x - x, p.y - y);
+    if(d < dist && d < hitRadius){ hit = p; dist = d; }
+  }
+  if(!hit){
+    if(pin) _vfHideTip();
+    else if(!_vfTipPinned) tip.style.display = 'none';
+    return false;
+  }
+  _vfTipPinned = !!pin;
+  const oiTxt = (hit.oi>=0?'+':'') + hit.oi.toFixed(2) + '%';
+  const pxTxt = (hit.px>=0?'+':'') + hit.px.toFixed(2) + '%';
+  // 資料真實性標記：跟全站其他頁面一致，估算值明確告知
+  const realTag = hit.oiReal
+    ? '<span style="font-size:8px;color:var(--green)">●真實</span>'
+    : '<span style="font-size:8px;color:var(--muted)">○估算</span>';
+  tip.innerHTML =
+    `<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px">
+      <b style="color:var(--amber);font-size:13px">${escapeHtml(hit.coin)}</b>
+      <span style="display:flex;gap:4px">
+        <span class="tv-badge" onclick="openTradingView('${hit.coin}',event)">TV</span>${cgBadgeHtml(hit.coin)}
+      </span>
+    </div>
+    <div style="display:grid;grid-template-columns:auto auto;gap:4px 14px">
+      <span style="color:var(--muted)">持倉 1H ${realTag}</span><b style="color:#a78bfa;text-align:right">${oiTxt}</b>
+      <span style="color:var(--muted)">價格 1H</span><b style="color:${hit.px>=0?'var(--green)':'var(--red)'};text-align:right">${pxTxt}</b>
+      <span style="color:var(--muted)">象限</span><b style="color:${hit.color};text-align:right">${hit.quad}</b>
+    </div>
+    <div onclick="openDetailModal('${hit.coin}','${hit.oi>=0&&hit.px>=0?'long':hit.oi>=0&&hit.px<0?'short':hit.px>=0?'long':'short'}')"
+      style="margin-top:8px;text-align:center;padding:5px;border-radius:5px;background:var(--amber-dim);color:var(--amber);font-size:10px;font-weight:700;cursor:pointer">⚡ 查看評分詳情</div>`;
+  tip.style.display = 'block';
+  tip.classList.toggle('is-pinned', _vfTipPinned);
+  const tw = tip.offsetWidth || 190, th = tip.offsetHeight || 100;
+  tip.style.left = Math.max(8, Math.min(r.width - tw - 8, x + 16)) + 'px';
+  tip.style.top  = Math.max(44, Math.min(r.height - th + 36, y - 10)) + 'px';
+  return true;
+}
+
+function _vfSetupEvents(canvas){
+  if(canvas.dataset.vfReady) return;
+  canvas.dataset.vfReady = '1';
+  // 滾輪縮放
+  canvas.addEventListener('wheel', e=>{
+    if(_vfLocked) return;
+    e.preventDefault();
+    _vfZoom *= e.deltaY < 0 ? 1.12 : 0.9;
+    _vfZoom = Math.max(.55, Math.min(5, _vfZoom));
+    renderVisualFilter();
+  }, {passive:false});
+  // 滑鼠拖曳 / 點擊釘選 tooltip
+  canvas.addEventListener('mousedown', e=>{
+    if(_vfLocked || e.button !== 0) return;
+    if(_vfShowTip(canvas, e.clientX, e.clientY, 24, true)){
+      e.preventDefault(); _vfDrag = null; return;
+    }
+    _vfHideTip();
+    e.preventDefault();
+    _vfDrag = { x:e.clientX, y:e.clientY, panX:_vfPanX, panY:_vfPanY, moved:false };
+    canvas.style.cursor = 'grabbing';
+  });
+  window.addEventListener('mousemove', e=>{
+    if(!_vfDrag) return;
+    e.preventDefault();
+    const dx = e.clientX - _vfDrag.x, dy = e.clientY - _vfDrag.y;
+    if(Math.hypot(dx,dy) > 6) _vfDrag.moved = true;
+    const {RX,RY,pw,ph} = _vfView;
+    // 像素位移換算回資料百分比位移，確保任何縮放等級下拖曳手感一致
+    _vfPanX = _vfDrag.panX - dx * (2*RX/Math.max(1,pw));
+    _vfPanY = _vfDrag.panY + dy * (2*RY/Math.max(1,ph));
+    _vfClampPan();
+    renderVisualFilter();
+  }, {passive:false});
+  window.addEventListener('mouseup', ()=>{
+    if(_vfDrag){ _vfDrag = null; canvas.style.cursor = 'grab'; }
+  });
+  // hover tooltip
+  canvas.addEventListener('mousemove', e=>{
+    if(_vfLocked || _vfTipPinned || _vfDrag) return;
+    _vfShowTip(canvas, e.clientX, e.clientY, 24);
+  });
+  canvas.addEventListener('mouseleave', ()=>{ if(!_vfTipPinned) _vfHideTip(); });
+  // 觸控：單指拖曳、雙指 pinch 縮放、輕點顯示 tooltip
+  canvas.addEventListener('touchstart', e=>{
+    if(_vfLocked) return;
+    e.preventDefault();
+    if(e.touches.length === 2){
+      _vfDrag = null;
+      const a = e.touches[0], b = e.touches[1];
+      _vfPinch = { dist: Math.max(1, Math.hypot(a.clientX-b.clientX, a.clientY-b.clientY)), zoom: _vfZoom };
+      _vfHideTip();
+      return;
+    }
+    if(e.touches.length !== 1) return;
+    const t = e.touches[0];
+    _vfDrag = { x:t.clientX, y:t.clientY, panX:_vfPanX, panY:_vfPanY, moved:false };
+    _vfHideTip();
+  }, {passive:false});
+  canvas.addEventListener('touchmove', e=>{
+    if(_vfLocked) return;
+    e.preventDefault();
+    if(e.touches.length === 2 && _vfPinch){
+      const a = e.touches[0], b = e.touches[1];
+      const dist = Math.max(1, Math.hypot(a.clientX-b.clientX, a.clientY-b.clientY));
+      _vfZoom = Math.max(.55, Math.min(5, _vfPinch.zoom * (dist/_vfPinch.dist)));
+      renderVisualFilter();
+      return;
+    }
+    if(!_vfDrag || e.touches.length !== 1) return;
+    const t = e.touches[0];
+    const dx = t.clientX - _vfDrag.x, dy = t.clientY - _vfDrag.y;
+    if(Math.hypot(dx,dy) > 6) _vfDrag.moved = true;
+    const {RX,RY,pw,ph} = _vfView;
+    _vfPanX = _vfDrag.panX - dx * (2*RX/Math.max(1,pw));
+    _vfPanY = _vfDrag.panY + dy * (2*RY/Math.max(1,ph));
+    _vfClampPan();
+    renderVisualFilter();
+  }, {passive:false});
+  canvas.addEventListener('touchend', e=>{
+    if(e.touches.length === 0){
+      // 「輕點沒移動」= 想看 tooltip，而非拖曳 —— 解決手機上點標籤誤觸拖曳的問題
+      const drag = _vfDrag;
+      if(drag && !drag.moved && !_vfPinch) _vfShowTip(canvas, drag.x, drag.y, 34, true);
+      _vfDrag = null; _vfPinch = null;
+    } else if(e.touches.length === 1 && _vfPinch){
+      _vfPinch = null;
+      const t = e.touches[0];
+      _vfDrag = { x:t.clientX, y:t.clientY, panX:_vfPanX, panY:_vfPanY, moved:false };
+    }
+  });
+  canvas.addEventListener('touchcancel', ()=>{ _vfDrag = null; _vfPinch = null; });
+  // tooltip 內點擊不冒泡（才能點得到 TV/CG/評分按鈕），點外部取消釘選
+  const tip = document.getElementById('vfTooltip');
+  if(tip && !tip.dataset.vfReady){
+    tip.dataset.vfReady = '1';
+    tip.addEventListener('mousedown', e=>e.stopPropagation());
+    tip.addEventListener('touchstart', e=>e.stopPropagation(), {passive:true});
+    document.addEventListener('mousedown', e=>{
+      if(!_vfTipPinned) return;
+      const curTip = document.getElementById('vfTooltip');
+      const curCanvas = document.getElementById('vfCanvas');
+      if(curTip && (curTip.contains(e.target) || e.target === curCanvas)) return;
+      _vfHideTip();
+    });
+  }
+}
+
+function renderVisualFilter(){
+  const canvas = document.getElementById('vfCanvas');
+  if(!canvas) return;
+  const OI_T = parseFloat(document.getElementById('vfOiThresh')?.value ?? 3);
+  const PX_T = parseFloat(document.getElementById('vfPxThresh')?.value ?? 3);
+  _vfSetupEvents(canvas);
+
+  // HiDPI 適配 + 響應式高度
+  const dpr = window.devicePixelRatio || 1;
+  const W = Math.max(300, canvas.offsetWidth || 600);
+  const H = W >= 1000 ? 560 : W >= 700 ? 480 : 400;
+  canvas.style.height = H + 'px';
+  canvas.width = Math.round(W * dpr);
+  canvas.height = Math.round(H * dpr);
+  const ctx = canvas.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+  // 配色沿用全站 CSS 變數色系
+  const C = {
+    bg:'#0d0f14',
+    q1:'rgba(0,200,150,.045)', q2:'rgba(99,102,241,.045)',
+    q3:'rgba(255,61,90,.045)', q4:'rgba(249,115,22,.048)',
+    grid:'rgba(255,255,255,.055)', tick:'rgba(255,255,255,.34)',
+    axis:'rgba(255,255,255,.18)', border:'rgba(255,255,255,.14)',
+    zone:'rgba(240,165,0,.08)', zoneStroke:'rgba(240,165,0,.55)',
+    axisText:'rgba(255,255,255,.5)', zoneText:'rgba(240,165,0,.8)',
+    badgeBg:'rgba(0,0,0,.3)', labelBg:'rgba(8,9,12,.75)',
+    labelStroke:'rgba(255,255,255,.13)', labelText:'rgba(255,255,255,.92)',
+    pointStroke:'rgba(255,255,255,.82)'
+  };
+
+  const PL=58, PR=20, PT=28, PB=48;
+  const pw = W-PL-PR, ph = H-PT-PB;
+  const RX = 15/_vfZoom, RY = 10/_vfZoom;
+  _vfView = { RX, RY, pw, ph };
+  const cx = v => PL + ((v-_vfPanX)/RX + 1) * pw/2;
+  const cy = v => PT + (1 - (v-_vfPanY)/RY) * ph/2;
+  const inPlot = (x,y) => x>=PL && x<=PL+pw && y>=PT && y<=PT+ph;
+  function quadName(oi, px){
+    if(oi>=0 && px>=0) return ['Q1 多頭建倉', '#00c896'];
+    if(oi<0  && px>=0) return ['Q2 空頭平倉', '#818cf8'];
+    if(oi<0  && px<0)  return ['Q3 多頭平倉', '#ff3d5a'];
+    return ['Q4 空頭建倉', '#f97316'];
+  }
+
+  // 背景 + 四象限底色
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle = C.bg;
+  _vfRoundRect(ctx,0,0,W,H,8); ctx.fill();
+  const mx = cx(0), my = cy(0);
+  ctx.fillStyle=C.q1; ctx.fillRect(mx,PT,PL+pw-mx,my-PT);
+  ctx.fillStyle=C.q2; ctx.fillRect(PL,PT,mx-PL,my-PT);
+  ctx.fillStyle=C.q3; ctx.fillRect(PL,my,mx-PL,PT+ph-my);
+  ctx.fillStyle=C.q4; ctx.fillRect(mx,my,PL+pw-mx,PT+ph-my);
+
+  // 網格 + 刻度（密度隨縮放自適應）
+  const stepX = RX<=5?1:RX<=10?2:5;
+  const stepY = RY<=4?1:RY<=8?2:4;
+  ctx.lineWidth=1; ctx.strokeStyle=C.grid; ctx.fillStyle=C.tick;
+  ctx.font='10px system-ui'; ctx.textAlign='center';
+  for(let v=-Math.floor((RX+Math.abs(_vfPanX))/stepX)*stepX; v<=RX+Math.abs(_vfPanX)+.001; v+=stepX){
+    const x=cx(v); if(x<PL||x>PL+pw) continue;
+    ctx.beginPath(); ctx.moveTo(x,PT); ctx.lineTo(x,PT+ph); ctx.stroke();
+    ctx.fillText((v>0?'+':'')+v+'%', x, PT+ph+18);
+  }
+  ctx.textAlign='right';
+  for(let v=-Math.floor((RY+Math.abs(_vfPanY))/stepY)*stepY; v<=RY+Math.abs(_vfPanY)+.001; v+=stepY){
+    const y=cy(v); if(y<PT||y>PT+ph) continue;
+    ctx.beginPath(); ctx.moveTo(PL,y); ctx.lineTo(PL+pw,y); ctx.stroke();
+    ctx.fillText((v>0?'+':'')+v+'%', PL-6, y+3);
+  }
+
+  // 十字軸 + 外框
+  ctx.strokeStyle=C.axis;
+  ctx.beginPath(); ctx.moveTo(PL,my); ctx.lineTo(PL+pw,my); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(mx,PT); ctx.lineTo(mx,PT+ph); ctx.stroke();
+  ctx.strokeStyle=C.border; ctx.strokeRect(PL,PT,pw,ph);
+
+  // 金色虛線「主力建倉訊號區」：OI ≥ +門檻 且 |價格| ≤ 門檻（模式為平倉時不畫）
+  const thy1=cy(PX_T), thy2=cy(-PX_T);
+  if(_vfMode !== 'close'){
+    const thx=cx(OI_T);
+    const zx=Math.max(thx,PL), zy=Math.max(thy1,PT);
+    const zw=PL+pw-zx, zh=Math.min(thy2,PT+ph)-zy;
+    if(zw>0 && zh>0){
+      ctx.fillStyle=C.zone; ctx.fillRect(zx,zy,zw,zh);
+      ctx.strokeStyle=C.zoneStroke; ctx.setLineDash([6,4]); ctx.strokeRect(zx,zy,zw,zh); ctx.setLineDash([]);
+      ctx.fillStyle=C.zoneText; ctx.font='10px system-ui'; ctx.textAlign='left';
+      ctx.fillText('主力建倉訊號區', Math.max(zx+8,PL+8), Math.max(zy+15,PT+15));
+    }
+  }
+  // 藍紫虛線「主力平倉訊號區」（鏡像）：OI ≤ -門檻 且 |價格| ≤ 門檻（模式為建倉時不畫）
+  // 意義：倉位在悄悄大量撤出但價格還沒反應 —— 可能是趨勢動能衰竭的先兆，
+  // 或大戶獲利了結，通常伴隨波動收斂或行情轉折。
+  if(_vfMode !== 'open'){
+    const thxN=cx(-OI_T);
+    const zxN=PL, zyN=Math.max(thy1,PT);
+    const zwN=Math.min(thxN,PL+pw)-PL, zhN=Math.min(thy2,PT+ph)-zyN;
+    if(zwN>0 && zhN>0){
+      ctx.fillStyle='rgba(129,140,248,.07)'; ctx.fillRect(zxN,zyN,zwN,zhN);
+      ctx.strokeStyle='rgba(129,140,248,.55)'; ctx.setLineDash([6,4]); ctx.strokeRect(zxN,zyN,zwN,zhN); ctx.setLineDash([]);
+      ctx.fillStyle='rgba(129,140,248,.8)'; ctx.font='10px system-ui'; ctx.textAlign='right';
+      ctx.fillText('主力平倉訊號區', Math.min(zxN+zwN-8,PL+pw-8), Math.max(zyN+15,PT+15));
+    }
+  }
+
+  // 軸標題
+  ctx.fillStyle=C.axisText; ctx.textAlign='center'; ctx.font='11px system-ui';
+  ctx.fillText('持倉變化 1H (%)', PL+pw/2, H-10);
+  ctx.save(); ctx.translate(14, PT+ph/2); ctx.rotate(-Math.PI/2); ctx.fillText('價格變化 1H (%)', 0, 0); ctx.restore();
+
+  // 四角象限標籤
+  const ql=[['Q2 空頭平倉',PL+14,PT+16,'#818cf8'],['Q1 多頭建倉',PL+pw-108,PT+16,'#00c896'],
+            ['Q3 多頭平倉',PL+14,PT+ph-26,'#ff3d5a'],['Q4 空頭建倉',PL+pw-108,PT+ph-26,'#f97316']];
+  ctx.font='bold 10px system-ui';
+  for(const [t,x,y,c] of ql){
+    ctx.fillStyle=C.badgeBg; _vfRoundRect(ctx,x-6,y-12,100,19,10); ctx.fill();
+    ctx.fillStyle=c; ctx.textAlign='left'; ctx.fillText(t,x,y+1);
+  }
+
+  // ── 資料收集：遍歷 oiData（loadOI 填充），用 getCoinMetrics 統一取值 ──
+  const filtered = [];
+  _vfHoverPoints = [];
+  const seen = new Set();
+  for(const key of Object.keys(oiData)){
+    const sym = key.replace(/USDT$/,'');
+    if(!sym || seen.has(sym)) continue;
+    seen.add(sym);
+    const m = getCoinMetrics(sym);
+    const oi = m.oiChg1h, px = m.priceChg1h;
+    if(oi == null || px == null || isNaN(oi) || isNaN(px)) continue;
+    // 篩選條件（修正版）：|OI 變化| ≥ 門檻（雙向對稱！）且價格橫盤。
+    // 原本寫 oi >= 門檻 只收 OI「上升」的幣，導致 Q2 空頭平倉 / Q3 多頭平倉
+    // （皆為 OI 下降）永遠不可能出現任何點 —— 左半邊圖表整個是死的。
+    // 改用絕對值後：OI 大增（建倉）與 OI 大減（平倉）都能被抓到。
+    if(!(Math.abs(oi) >= OI_T && Math.abs(px) <= PX_T)) continue;
+    // 模式過濾：open=只看建倉(OI↑)、close=只看平倉(OI↓)、all=不過濾
+    if(_vfMode === 'open'  && oi < 0) continue;
+    if(_vfMode === 'close' && oi >= 0) continue;
+    const x = cx(oi), y = cy(px);
+    if(!inPlot(x,y)) continue;
+    const [quad, color] = quadName(oi, px);
+    filtered.push({ coin:sym, oi, px, quad, color, x, y, oiReal: !!m.oiChgReal });
+  }
+  filtered.sort((a,b)=>Math.abs(b.oi)-Math.abs(a.oi)); // 依 |OI| 降序：建倉與平倉都按強度排
+
+  // ── 繪製散點 + 幣名標籤（防碰撞版）──
+  // 真實市場數據下，多數幣的 1H 變化天生集中在原點附近（±1~3%），若每個點
+  // 都硬畫標籤，會疊成一坨完全不可讀的黑塊。解法：
+  //   1. filtered 已依 OI 降序排列 → OI 變化最大（最值得關注）的幣優先取得標籤位
+  //   2. 每個標籤嘗試 4 個候選位置（上/下/右/左），全部撞到已畫標籤就放棄畫標籤
+  //   3. 沒標籤的點仍會畫「點」本身，且照樣註冊 hover point —— 滑過/輕點一樣看得到數值
+  //   4. 底部顯示「N 個未標示」提示，告知使用者可縮放放大來展開重疊區
+  const _drawnLabels = [];
+  const _labelHits = (lx,ly,tw,th)=>{
+    for(const r of _drawnLabels){
+      if(lx < r.x+r.w && lx+tw > r.x && ly < r.y+r.h && ly+th > r.y) return true;
+    }
+    return false;
+  };
+  let hiddenLabelCount = 0;
+  ctx.font='bold 10px system-ui';
+  for(const f of filtered){
+    // 點本身永遠畫
+    ctx.beginPath(); ctx.arc(f.x, f.y, 5.5, 0, Math.PI*2);
+    ctx.fillStyle=f.color; ctx.fill();
+    ctx.strokeStyle=C.pointStroke; ctx.lineWidth=1.2; ctx.stroke();
+    _vfHoverPoints.push({ coin:f.coin, oi:f.oi, px:f.px, x:f.x, y:f.y, quad:f.quad, color:f.color, oiReal:f.oiReal });
+
+    // 標籤：嘗試上→下→右→左四個位置，全撞就跳過
+    const tw = ctx.measureText(f.coin).width + 14, th = 18;
+    const candidates = [
+      [f.x - tw/2, f.y - 27],       // 上
+      [f.x - tw/2, f.y + 9],        // 下
+      [f.x + 8,    f.y - th/2],     // 右
+      [f.x - tw - 8, f.y - th/2],   // 左
+    ];
+    let placed = false;
+    for(const [rawX, rawY] of candidates){
+      const lx = Math.min(Math.max(rawX, PL+2), PL+pw-tw-2);
+      const ly = Math.min(Math.max(rawY, PT+2), PT+ph-th-2);
+      if(_labelHits(lx, ly, tw, th)) continue;
+      ctx.fillStyle=C.labelBg; _vfRoundRect(ctx,lx,ly,tw,th,9); ctx.fill();
+      ctx.strokeStyle=C.labelStroke; ctx.stroke();
+      ctx.fillStyle=C.labelText; ctx.textAlign='center'; ctx.fillText(f.coin, lx+tw/2, ly+12);
+      _drawnLabels.push({x:lx, y:ly, w:tw, h:th});
+      placed = true;
+      break;
+    }
+    if(!placed) hiddenLabelCount++;
+  }
+  // 重疊區提示：告訴使用者還有多少點沒標名字，以及怎麼看它們
+  if(hiddenLabelCount > 0){
+    ctx.font='10px system-ui'; ctx.textAlign='right';
+    ctx.fillStyle='rgba(240,165,0,.75)';
+    ctx.fillText(`${hiddenLabelCount} 個幣重疊未標名 · 滾輪/雙指放大展開，或直接點小圓點看數值`, PL+pw-6, PT+ph-8);
+  }
+
+  // ── 下方結果卡片列表 ──
+  const listEl = document.getElementById('vfResults');
+  if(!listEl) return;
+  if(!Object.keys(oiData).length){
+    listEl.innerHTML = '<div style="color:var(--muted);font-size:12px;padding:14px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;text-align:center">OI 資料載入中…（首次載入約需數秒）</div>';
+    return;
+  }
+  if(!filtered.length){
+    listEl.innerHTML = `<div style="color:var(--muted);font-size:12px;padding:14px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;text-align:center">目前無符合條件的幣種（|OI|≥${OI_T}% 且 |價格|≤${PX_T}%${_vfMode==='open'?'，僅建倉':_vfMode==='close'?'，僅平倉':''}）— 可調低 OI 門檻放寬條件</div>`;
+    return;
+  }
+  listEl.innerHTML =
+    `<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:9px;flex-wrap:wrap">
+      <div style="font-size:13px;font-weight:800;color:var(--amber)">${_vfMode==='open'?'符合建倉篩選':_vfMode==='close'?'符合平倉篩選':'符合篩選（建倉+平倉）'}（${filtered.length} 個）</div>
+      <div style="font-size:10px;color:var(--muted)">點卡片開評分詳情 · 圖上點標籤看數值</div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:8px">` +
+    filtered.slice(0,24).map(f=>`
+      <div class="vf-result-card" data-sym="${f.coin}" data-side="${f.px>=0?'long':'short'}" style="border-left:3px solid ${f.color}"
+        onclick="openDetailModal(this.dataset.sym,this.dataset.side)">
+        <div style="display:flex;justify-content:space-between;gap:8px;align-items:center">
+          <span style="font-weight:800;font-size:13px;font-family:var(--mono)">${f.coin}</span>
+          <span style="font-size:9.5px;color:${f.color};font-weight:800">${f.quad}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-top:6px;font-size:10.5px;color:var(--muted)">
+          <span>持倉 <b style="color:${f.oi>=0?'#a78bfa':'#818cf8'}">${f.oi>=0?'+':''}${f.oi.toFixed(1)}%</b>${f.oiReal?'':'<span style="font-size:7px;opacity:.6">○</span>'}</span>
+          <span>價格 <b style="color:${f.px>=0?'var(--green)':'var(--red)'}">${f.px>=0?'+':''}${f.px.toFixed(1)}%</b></span>
+        </div>
+      </div>`).join('') + '</div>';
 }
 
 /* ══ 學習資源：手風琴展開/收合 + 安裝教學平台切換 ══ */
@@ -7618,7 +8201,7 @@ async function runDiag(){
 // 頁面可見性：隱藏時暫停資料更新
 // 找出目前顯示中的頁面 key（用於 visibilitychange 恢復時，重新觸發該頁面專屬的輪詢建立邏輯）
 function getCurrentPageName(){
-  const pageIds = ['dashboard','coins','news','calc','sectors','divergence','oi','sycamore','learn'];
+  const pageIds = ['dashboard','coins','news','calc','sectors','divergence','oi','sycamore','learn','visual'];
   for(const p of pageIds){
     const el = document.getElementById('page-'+p);
     if(el && el.style.display !== 'none') return p;
